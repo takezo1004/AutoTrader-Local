@@ -1,0 +1,7 @@
+{
+  "name": "MESA_Stochastic",
+  "interval": 15,
+  "warmup_bars": 500,
+  "version": 5,
+  "label": "V8_3"
+}

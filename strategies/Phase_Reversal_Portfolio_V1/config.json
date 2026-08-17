@@ -1,0 +1,7 @@
+{
+ "_comment": "Phase_Reversal_Portfolio V1（確定・2026-08-14）。サブ3本（_subs/ に同梱・凍結）を枠1つ・証拠金1本分で束ねる。priority＝同じ足で複数サブが発火したときの優先順。★全6通りをまるごと測って S→D→M に確定（隠しテスト・ストレス・2本組比較の全検証を両候補にかけた上でユーザー決定）。",
+ "priority": ["Phase_Reversal_Stochastic", "Phase_Reversal_DoubleDT", "Phase_Reversal_Momentum"],
+ "qty_per_entry": 3,
+ "session_enabled": true,
+ "warmup_bars": 700
+}

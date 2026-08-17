@@ -1,0 +1,22 @@
+{
+  "_comment": "セッション時刻カレンダー（era 対応）＋カットオフ。session_lib が参照。GUI(カレンダー管理>時間コントロール)で編集予定。決め打ちでなく外部化（[[feedback_no_hardcoding]]）。制度変更時はここに新しい regime を先頭追記する。",
+  "_source": "JPX 公式（日中引け 15:15→15:45・夜間開始 16:30→17:00 ＝2024-11-05 東証取引時間延伸）。夜間引けは当データ範囲で 06:00。",
+  "offset_min_by_interval": {
+    "1": 16, "5": 20, "15": 30, "30": 45, "60": 75, "240": 255
+  },
+  "default_offset_min": 30,
+  "regimes": [
+    {
+      "from": "2024-11-05",
+      "label": "post-2024-11-05 (TSE extension)",
+      "day_open": "08:45", "day_close": "15:45",
+      "night_open": "17:00", "night_close": "06:00"
+    },
+    {
+      "from": "1900-01-01",
+      "label": "pre-2024-11-05 (J-GATE legacy)",
+      "day_open": "08:45", "day_close": "15:15",
+      "night_open": "16:30", "night_close": "06:00"
+    }
+  ]
+}

@@ -1,0 +1,430 @@
+# -*- coding: utf-8 -*-
+"""DT_Stochastic — 戦略（最小標準・「1バーで動く」＝Pine と同じ作り）。
+
+Pine `N225 DT Stoch 3Split`（work/strategy.pine）の忠実移植。
+  - 確定足ごとに on_bar(bar)/step(A,i) が呼ばれ、注文リストを返す（確定足の終値で判断）。
+  - 指標は on_bar 内で毎バー更新（直近 window 本のバッファを保持し _lib 純関数で再計算）。
+  - パラメータは config.json（ローカルエンジンで調整）。
+
+★約定モデル＝TV（Pine）完全忠実（2026-06-15 v3.5 確定。旧「同バー終値約定」は撤回）:
+  - エントリー（strategy.entry）/ 標準決済・ドテン（strategy.close）＝**成行・次バー始値**約定。
+  - TP1/TP2（strategy.exit limit）＝**指値・イントラバー**約定（毎バー再配置・各 ID 一度きり）。
+  - 約定（次バー始値・指値イントラバー）は共有 `_engine` の PineBroker が行う＝戦略は注文を返すだけ。
+  - 戦略は Pine 同様に**エンジンが確定したポジション**を読む:
+    `self.position_size`（符号付き枚数）/ `self.position_avg_price`（実約定値）/ `self.entry_bar`。
+    これらは共有エンジンが decide 前に毎バー注入する（Pine の strategy.* グローバル相当）。
+  - TP ターゲット＝`position_avg_price ± tp_R × R`、R＝|position_avg_price − 約定バーの zz60 ピボット|。
+    （Pine L886-897：just_entered で position_avg_price と zlow/zhigh_60m から算出）。
+
+決定ロジックは Pine 本体（work/strategy.pine）と 1:1:
+  4state エントリー（順張り/逆張り×over/under×採用フラグ×FibSync×ドテン）＋
+  3Split エグジット（TP1=+1R・TP2=+2R 指値／残＝反対サイン strategy.close／SQ は共有エンジン）。
+
+★自己完結: _lib の部品をこのフォルダにコピー同梱済（indicators/oscillator/signup/zigzag/
+  phases/fibsync.py）＝跨ぎ import ゼロ・単体で動く。正本は strategies/_lib/（更新時は refresh）。
+  確定版 <戦略名>/ も同じ自己完結形（work で改善 → 確定版へ refresh）。
+
+================================================================================
+★★ Pine 逆移植ガイド（Python → TradingView Pine 復元用・完成検証のため）★★
+--------------------------------------------------------------------------------
+この Python は「売買ロジックの本体」のみを持つ。TradingView に載せて目視チェックする
+には、元 `work/strategy.pine` と同じになるよう下記の Pine 専用要素を復元する必要がある。
+
+[A] strategy() 宣言（Pine L97-111・必ずこの値）:
+    strategy('N225 DT Stoch 3Split', shorttitle="DTStoch3", overlay=true, precision=2,
+      margin_long=0, margin_short=0,                 // BT 必須（無いと取引が出ない）
+      default_qty_type=strategy.fixed, default_qty_value=3,   // = qty_per_entry
+      initial_capital=10000000, pyramiding=1,
+      process_orders_on_close=false,                 // ★次バー始値約定（本 Python・PineBroker と一致）
+      calc_on_every_tick=false, max_lines_count=500, max_labels_count=500, max_boxes_count=500)
+
+[B] 限月制御 SQ（Python では戦略に入れない＝共有エンジン側。Pine では復元する）:
+    import jubilantEagle98317/KengetsuLib/1 as KGL
+    is_force_close_time = KGL.is_force_close_time(time, i_force_close_offset_min)  // 既定30分前
+    if is_force_close_time
+        strategy.close_all(comment='SQ前強制クローズ')
+
+[C] プルバック順張りサブ（config use_pullback 既定 false＝本 Python は未実装）:
+    Pine L212-221 の pb_* 入力、L809-814 の pb_signal、L900-903 の PB エントリー、
+    L992-1025 の PB 3分割ATR決済（既定 OFF なので売買に影響なし）。
+
+[D] 表示系（売買に無関係・TV 目視チェック用に復元する）:
+    plot/label/dashboard/bgcolor/ZZ60 線（Pine L956- 以降）。本 Python では省略。
+
+[E] 表示用だが判定に無関係な計算（Pine にあるが Python では省略可）:
+    ZZ15（dir_15m 等・判定に未使用）、kengai_msg、mesa_cross。
+
+[F] オシレーターの基軸（DT 固有・本 Python の前段＝Pine と同一式）:
+    HP(hl2, 48) → DtSrc=ta.rsi(HP, rsi_len=54) → SuperSmoother(10) → Stoch(20) →
+    SuperSmoother → 0.33*2*(x-0.5)+0.67*前値 → ±0.999 clamp = MESAStochastic。
+================================================================================
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+# 自己完結: 同梱部品を「戦略フォルダ単位の一意キー」で読み込む（裸の import を避ける）。
+import importlib.util as _ilu
+_HERE = Path(__file__).resolve().parent
+def _vlib(_m):
+    _k = f"_v.{_HERE.parent.name}.{_HERE.name}.{_m}"
+    _mod = sys.modules.get(_k)
+    if _mod is None:
+        _sp = _ilu.spec_from_file_location(_k, str(_HERE / (_m + ".py")))
+        _mod = _ilu.module_from_spec(_sp); sys.modules[_k] = _mod; _sp.loader.exec_module(_mod)
+    return _mod
+_i = _vlib("indicators"); hl2, highpass48, pine_rsi, atr14 = _i.hl2, _i.highpass48, _i.pine_rsi, _i.atr14
+_o = _vlib("oscillator"); ss_stoch_inertia = _o.ss_stoch_inertia
+_s = _vlib("signup"); self_crossover, self_crossunder = _s.self_crossover, _s.self_crossunder
+_z = _vlib("zigzag"); compute_60m_zigzag, extract_pivots_from_zigzag = _z.compute_60m_zigzag, _z.extract_pivots_from_zigzag
+_p = _vlib("phases"); compute_phase, compute_phase_thresholds = _p.compute_phase, _p.compute_phase_thresholds
+_f = _vlib("fibsync"); compute_fib_pullback_v2, compute_reversal_flags, compute_bottomed_held = _f.compute_fib_pullback_v2, _f.compute_reversal_flags, _f.compute_bottomed_held
+
+try:
+    import session_lib  # 共有セッション制御（LocalEngine提供・ZIP非同梱）
+except Exception:
+    session_lib = None
+
+MANIFEST = {"name": "DT_Stochastic", "interval": 15, "warmup_bars": 300, "version": 3, "label": "V2"}
+
+def prev_session_low(L, idx):
+    """PSL＝直前に完了したセッションの安値（バーごと）。
+
+    セッション境界＝バー間の時間差が通常間隔（差分の中央値）の 1.5 倍を超えるギャップ。
+    時刻を決め打ちしない。先頭セッション中は NaN（構造損切りは自動的に不作動）。
+    ※ MESA_Stochastic V8_1 の実証実装をコピー同梱（2026-07-20・ポートフォリオ v5 用。
+      config: struct_exit / struct_exit_grace / struct_exit_require_above_psl＝サブ独自設定・既定 OFF）。
+    """
+    n = len(L)
+    if n < 2:
+        return np.full(n, np.nan)
+    t = np.asarray(idx.view("int64"), dtype=np.int64)
+    d = np.diff(t)
+    step = float(np.median(d))
+    sid = np.concatenate([[0], np.cumsum(d > step * 1.5)])
+    lo = pd.Series(np.asarray(L, float)).groupby(sid).min()
+    return lo.shift(1).reindex(sid).to_numpy()
+
+
+
+def _load_config() -> dict:
+    with open(Path(__file__).resolve().parent / "config.json", encoding="utf-8") as f:
+        return json.load(f)
+
+
+class DT_Stochastic:
+    def __init__(self, cfg: dict | None = None):
+        self.session_enabled = True            # ★単独稼働時 ON。ポートフォリオ内包時は親が False に。
+        self.interval = MANIFEST.get("interval", 15)
+        self._bt_ts = None                     # precompute で df.index 保持（セッション判定の ts）
+        # [V8_2共通] 境界エントリー排除フラグ（BT: precompute で全系列化・reset では消さない。
+        # live(on_bar) は None のまま＝LocalEngine session_lib の block_new が同等以上をカバー）
+        self._entry_block = None
+        self.cfg = cfg or _load_config()
+        self.W = int(self.cfg.get("window", 500))
+        self.qty_per_entry = int(self.cfg.get("qty_per_entry", 3))
+        self.reset()
+
+    def reset(self) -> None:
+        c = self.cfg
+        # phase 別 over/under 閾値（Pine: upperBand_<phase> / lowerBand_<phase>・6局面ずつ）
+        self.upper = dict(c["upper_band"])
+        self.lower = dict(c["lower_band"])
+        # バッファ（直近 W 本の確定足）
+        self._ts: list = []
+        self._o: list = []
+        self._h: list = []
+        self._l: list = []
+        self._c: list = []
+        # 決定状態（Pine var）
+        self.signup = 0
+        self.zz_p1 = np.nan          # 約定バーの zz60 反対側ピボット（R 計算用）
+        self.tp1 = np.nan            # TP1 指値価格
+        self.tp2 = np.nan            # TP2 指値価格
+        self._prev_size = 0          # 前バーの position_size（just_entered 検出用）
+        self._se_ok = False          # 構造損切り: このトレードが監視適格
+        self._se_cnt = None          # 構造損切り: 割れからの経過バー数（None=非割れ/回復済）
+        self._se_blocked = False     # 構造決済後のロング新規封鎖（under クロスで解除）
+        # [V8_2共通] タイムアウト撤退の走行極値（経過カウンタ方式・ロング/ショート対称）
+        self._to_fav = np.nan        # 建玉発生バー以降の順行極値（L:最高値 / S:最安値）
+        self._to_floor = np.nan      # 床の極値（L:最も高い安値 / S:最も低い高値）
+        # エンジンが decide 前に注入する Pine globals 相当（既定値）
+        self.position_size = 0       # 符号付き枚数（+long / -short / 0）
+        self.position_avg_price = 0.0
+        self.entry_bar = -1
+        self.bars_since_entry = -1
+
+    # ---- TP ターゲット（約定値 position_avg_price と zz60 ピボット / ATR から）----
+    # [PINE] Pine L886-897：just_entered で R=|position_avg_price - zz60ピボット| から算出。
+    def _tp_targets(self, direction: int, atr_entry: float) -> tuple[float, float]:
+        c = self.cfg
+        avg = self.position_avg_price
+        d1 = d2 = np.nan
+        if c["tp_mode"] == "C":
+            if not np.isnan(self.zz_p1):
+                R = abs(avg - self.zz_p1)
+                if R > 0:
+                    d1, d2 = c["tp1_R"] * R, c["tp2_R"] * R
+        elif c["tp_mode"] == "E":
+            if not np.isnan(atr_entry) and atr_entry > 0:
+                d1, d2 = c["e_tp1_atr"] * atr_entry, c["e_tp2_atr"] * atr_entry
+        if np.isnan(d1):
+            return np.nan, np.nan
+        if direction > 0:
+            return avg + d1, avg + d2
+        return avg - d1, avg - d2
+
+    # ---- 指標計算（_lib 純関数・バッファ/全系列 共通）----
+    # [PINE] Pine L298-642（MESA計算・ZZ60・phase・FibSync）に対応。
+    def _compute_indicators(self, H, L, C, idx) -> dict:
+        c = self.cfg
+        price = hl2(H, L)
+        hp = highpass48(price)                            # HP 周期48は固定（Pine: 2π/48・input でない）
+        rsi = pine_rsi(hp, c["rsi_len"])                  # [PINE] DtSrc = ta.rsi(HP, rsi_len)
+        ms = ss_stoch_inertia(rsi, c["stoch_length"])     # [PINE]=MESAStochastic（SuperSmoother周期10は固定）
+        cu = self_crossover(ms); cd = self_crossunder(ms)  # [PINE] changeUp/changeDown
+        z = compute_60m_zigzag(H, L, idx, c["zz60_length"], c["zz60_threshold"], c["zz60_threshold_max"])
+        dir60 = z["dir_60m"]; dch = z["dirchanged_60m"]
+        zhigh = z["zhigh_60m"]; zlow = z["zlow_60m"]
+        piv = extract_pivots_from_zigzag(dch, zhigh, zlow, dir60)
+        p1 = piv["p1_price"]
+        phase = compute_phase(dir60, c["n_transition_bars"])
+        ub, lb = compute_phase_thresholds(phase, self.upper, self.lower)
+        fib = compute_fib_pullback_v2(dir60, dch, p1, H, L, C)
+        depth = c["fib_depth"]; K = c["fib_K"]
+        atr = atr14(H, L, C, 14)                          # TP モード E 用（C は zz60 ピボット）
+        # 上昇側は常に slope 反転（Pine に up 用 input は無い）
+        up_bot_K, up_top_K = compute_reversal_flags(fib["up_fib"], fib["up_fib_slope"], depth, K, mode="slope")
+        if c.get("dn_invalidate_newlow", True):           # Pine i_dn_invalidate_newlow（V7_8・既定true）
+            _, dn_top_K = compute_reversal_flags(fib["down_fib"], fib["down_fib_slope"], depth, K, mode="slope")
+            dn_bot_K = compute_bottomed_held(fib["down_fib"], fib["down_fib_slope"], fib["cur_low"], depth, K)
+        else:                                             # V7_7 従来（新安値で無効化しない）
+            dn_bot_K, dn_top_K = compute_reversal_flags(fib["down_fib"], fib["down_fib_slope"], depth, K, mode="slope")
+        psl = prev_session_low(L, idx)      # [SE] PSL（構造損切りの監視水準）
+        return {"ms": ms, "cu": cu, "cd": cd, "dir60": dir60, "zhigh": zhigh, "zlow": zlow,
+                "phase": phase, "ub": ub, "lb": lb, "atr": atr,
+                "up_bot_K": up_bot_K, "up_top_K": up_top_K,
+                "dn_bot_K": dn_bot_K, "dn_top_K": dn_top_K, "psl": psl, "H": H, "L": L, "C": C}
+
+    # ---- BT 高速パス: 全系列を1回だけ計算（on_bar と同じ _lib 関数・結果同一）----
+    def _session_gate(self, orders, ts):
+        # 共有 session_lib で per-bar セッション制御（締切窓の新規/決済抑止・週末/SQ強制flat）。
+        if session_lib is None or not getattr(self, "session_enabled", True) or ts is None:
+            return orders
+        fl = session_lib.flags(ts, self.interval)
+        return session_lib.gate(orders, fl, self.position_size)
+
+    def precompute(self, df) -> dict:
+        self._bt_ts = pd.DatetimeIndex(df.index)
+        H = df["high"].to_numpy(float); L = df["low"].to_numpy(float)
+        C = df["close"].to_numpy(float); idx = pd.DatetimeIndex(df.index)
+        self._entry_block = self._compute_entry_block(idx)
+        return self._compute_indicators(H, L, C, idx)
+
+    # ---- [V8_2共通] 境界エントリー排除フラグ（シグナルバー i 基準・全系列）----
+    # cross(V1)=約定バーがセッション跨ぎ（翌セッション寄り）/ auction(V2)=約定バーが板寄せ足。
+    # 境界＝バー間隔中央値×1.5 超のギャップ（時刻決め打ちなし）。詳細＝MESA V8_2（devlog 2026-07-18）。
+    def _compute_entry_block(self, idx):
+        c = self.cfg
+        v1 = bool(c.get("boundary_block_cross", c.get("boundary_entry_block", False)))
+        v2 = bool(c.get("boundary_block_auction", c.get("boundary_entry_block", False)))
+        if not (v1 or v2):
+            return None
+        n = len(idx)
+        blk = np.zeros(n, dtype=bool)
+        if n < 3:
+            blk[:] = True
+            return blk
+        t = np.asarray(idx.view("int64"), dtype=np.int64)
+        d = np.diff(t)                        # d[i] = ts[i+1] - ts[i]
+        thr = float(np.median(d)) * 1.5
+        gap = d > thr
+        if v1:
+            blk[: n - 1] |= gap               # 約定バー(i+1)がセッション跨ぎ
+        if v2:
+            blk[: n - 2] |= gap[1:]           # 約定バー(i+1)が板寄せ足（セッション最終足）
+        blk[n - 1] = True                     # 最終バーのシグナルは約定バーが無い
+        return blk
+
+    # ---- BT 高速パスの1ステップ（共有 PineBroker が i=0..n-1 で呼ぶ）----
+    def step(self, A, i) -> list[dict]:
+        if i < 2:        # 極小本数スキップ（on_bar の len<3 と同条件・golden と整合）
+            return []
+        orders = self._decide_at(A, i) or []
+        return self._session_gate(orders, self._bt_ts[i] if (self._bt_ts is not None and i < len(self._bt_ts)) else None)
+
+    # ---- 決定（バー i のスカラを読む。on_bar/step 共通＝二重化防止）----
+    # 構造は Pine 本体と 1:1（① signup → ② 条件 → ③ just_entered TP算出 → ④ エントリー → ⑤ エグジット）。
+    def _decide_at(self, A, i) -> list[dict]:
+        c = self.cfg
+        ms = A["ms"]; ub = A["ub"]; lb = A["lb"]
+        orders: list[dict] = []
+        d = int(A["dir60"][i]); cur_phase = A["phase"][i]
+        over_i = (ms[i - 1] <= lb[i - 1]) and (ms[i] > lb[i]) if i >= 1 else False
+        under_i = (ms[i - 1] >= ub[i - 1]) and (ms[i] < ub[i]) if i >= 1 else False
+        cu_i = bool(A["cu"][i]); cd_i = bool(A["cd"][i])
+        zhigh_i = A["zhigh"][i]; zlow_i = A["zlow"][i]; atr_i = A["atr"][i]
+
+        size = int(self.position_size)      # エンジン確定の符号付き建玉
+        prev = int(self._prev_size)
+        se_enabled = bool(c.get("struct_exit", False))
+        if self._se_blocked and under_i:
+            self._se_blocked = False               # under＝本来の出口クロスで封鎖解除
+
+        # ============ ① signup 更新 ============
+        if cu_i:
+            self.signup = 1
+        elif cd_i:
+            self.signup = -1
+
+        # ============ ② 条件 ============
+        is_trend = (self.signup == 1 and d == 1) or (self.signup == -1 and d == -1)
+        is_reverse = (self.signup == 1 and d == -1) or (self.signup == -1 and d == 1)
+        allow_trend = c["strategy_mode"] in ("T", "ALL")
+        allow_reverse = c["strategy_mode"] in ("R", "ALL")
+        take_signal = (is_trend and allow_trend) or (is_reverse and allow_reverse)
+        allow_long_phase = bool(c["allow_long"].get(cur_phase, False))
+        allow_short_phase = bool(c["allow_short"].get(cur_phase, False))
+        if c["use_sync_filter"]:
+            if d == 1:
+                sync_long_ok = bool(A["up_bot_K"][i]); sync_short_ok = bool(A["up_top_K"][i])
+            elif d == -1:
+                sync_long_ok = bool(A["dn_bot_K"][i]); sync_short_ok = bool(A["dn_top_K"][i])
+            else:
+                sync_long_ok = sync_short_ok = False
+        else:
+            sync_long_ok = sync_short_ok = True
+
+        # ============ ③ just_entered → TP ターゲット（約定値・約定バーピボットから）============
+        # [PINE] Pine L877-897：position_size の立ち上がりで R と TP を確定（avg_price は実約定値）。
+        if size > 0 and prev <= 0:
+            self.zz_p1 = zlow_i          # Long の SL ライン（R 計算用・約定バーの生 zz60 安値）
+            self.tp1, self.tp2 = self._tp_targets(+1, atr_i)
+            psl_e = float(A["psl"][i]) if "psl" in A else np.nan
+            _req_above = bool(c.get("struct_exit_require_above_psl", True))
+            self._se_ok = se_enabled and (not np.isnan(psl_e)) and (self.position_avg_price > psl_e or not _req_above)
+            self._se_cnt = None
+        elif size < 0 and prev >= 0:
+            self.zz_p1 = zhigh_i         # Short の SL ライン（R 計算用・約定バーの生 zz60 高値）
+            self.tp1, self.tp2 = self._tp_targets(-1, atr_i)
+        elif size == 0:
+            self.zz_p1 = np.nan; self.tp1 = np.nan; self.tp2 = np.nan
+            self._se_ok = False; self._se_cnt = None   # 封鎖 _se_blocked は under まで維持
+
+        # ============ ④ エントリー（Pine L794-864・4階層 if。約定は次バー始値）============
+        if size == 0 and self.signup == 1:                 # state1: flat→Long
+            if over_i:
+                if take_signal and allow_long_phase and sync_long_ok and not self._se_blocked:
+                    orders.append({"t": "entry", "dir": 1, "qty": self.qty_per_entry, "comment": "L"})
+                self.signup = 0
+        elif size == 0 and self.signup == -1:              # state2: flat→Short
+            if under_i:
+                if take_signal and allow_short_phase and sync_short_ok:
+                    orders.append({"t": "entry", "dir": -1, "qty": self.qty_per_entry, "comment": "S"})
+                self.signup = 0
+        elif size < 0 and self.signup == 1:                # state3: Short保有→Longドテン
+            if over_i:
+                if take_signal and c["allow_dohten"] and allow_long_phase and sync_long_ok and not self._se_blocked:
+                    orders.append({"t": "entry", "dir": 1, "qty": self.qty_per_entry, "comment": "L_dohten"})
+                self.signup = 0
+        elif size > 0 and self.signup == -1:               # state4: Long保有→Shortドテン
+            if under_i:
+                if take_signal and c["allow_dohten"] and allow_short_phase and sync_short_ok:
+                    orders.append({"t": "entry", "dir": -1, "qty": self.qty_per_entry, "comment": "S_dohten"})
+                self.signup = 0
+
+        # ============ ⑤ 3Split エグジット（Pine L929-947・保有中は毎バー）============
+        # TP1/TP2 を毎バー limit 再配置（各 ID 一度きり約定はエンジンが担保）＋ 反対サインで成行全決済。
+        if size > 0:
+            if not np.isnan(self.tp1):
+                orders.append({"t": "exit", "id": "TP1_L", "qty": 1, "limit": self.tp1, "comment": "TP1_C"})
+            if not np.isnan(self.tp2):
+                orders.append({"t": "exit", "id": "TP2_L", "qty": 1, "limit": self.tp2, "comment": "TP2_C"})
+            if under_i:
+                orders.append({"t": "close", "qty": None, "comment": "under"})
+        elif size < 0:
+            if not np.isnan(self.tp1):
+                orders.append({"t": "exit", "id": "TP1_S", "qty": 1, "limit": self.tp1, "comment": "TP1_C"})
+            if not np.isnan(self.tp2):
+                orders.append({"t": "exit", "id": "TP2_S", "qty": 1, "limit": self.tp2, "comment": "TP2_C"})
+            if over_i:
+                orders.append({"t": "close", "qty": None, "comment": "over"})
+
+        # ============ [SE] 構造損切り（受け入れ確認型・PSL・MESA V8_1 実証ロジック・ロング側）============
+        # 終値が PSL を割ったら経過カウンタ開始（回復で解除）。grace 本経過してなお終値が
+        # PSL 未満なら「受け入れ」＝次バー始値で全決済し、under クロスまでロング新規封鎖。
+        if size > 0 and self._se_ok:
+            psl_i = float(A["psl"][i])
+            c_i = float(A["C"][i])
+            if np.isnan(psl_i) or c_i > psl_i:
+                self._se_cnt = None
+            elif self._se_cnt is None:
+                if c_i < psl_i:
+                    self._se_cnt = 0
+            else:
+                self._se_cnt += 1
+                if c_i < psl_i and self._se_cnt >= int(c.get("struct_exit_grace", 8)):
+                    orders.append({"t": "close", "qty": None, "comment": "SE_PSL"})
+                    self._se_blocked = True
+                    self._se_ok = False
+
+        # ============ [V8_2共通] タイムアウト撤退（即死エントリーの時間切り・L/S対称）============
+        # timeout_bars 本経過しても順行 < timeout_maxfe_pct% かつ（床条件時）床なしなら次バー始値で全決済。
+        # ハードストップは全水準で4年純益毀損＝不採用（MESA V8_2 検証・devlog 2026-07-18）。
+        if size > 0 and prev <= 0:
+            self._to_fav = float(A["H"][i]); self._to_floor = float(A["L"][i])
+        elif size < 0 and prev >= 0:
+            self._to_fav = float(A["L"][i]); self._to_floor = float(A["H"][i])
+        elif size == 0:
+            self._to_fav = np.nan; self._to_floor = np.nan
+        elif size > 0:
+            self._to_fav = max(self._to_fav, float(A["H"][i]))
+            self._to_floor = max(self._to_floor, float(A["L"][i]))
+        else:
+            self._to_fav = min(self._to_fav, float(A["L"][i]))
+            self._to_floor = min(self._to_floor, float(A["H"][i]))
+        if (bool(c.get("timeout_exit", False)) and size != 0
+                and self.bars_since_entry >= int(c.get("timeout_bars", 12))
+                and not np.isnan(self._to_fav)):
+            _avg = self.position_avg_price
+            _f = float(c.get("timeout_maxfe_pct", 0.1)) / 100
+            if size > 0:
+                _dead = self._to_fav < _avg * (1 + _f)
+                if _dead and bool(c.get("timeout_require_no_floor", True)):
+                    _dead = self._to_floor < _avg
+            else:
+                _dead = self._to_fav > _avg * (1 - _f)
+                if _dead and bool(c.get("timeout_require_no_floor", True)):
+                    _dead = self._to_floor > _avg
+            if _dead and not any(od.get("t") == "close" for od in orders):
+                orders.append({"t": "close", "qty": None, "comment": "timeout"})
+
+        # ============ [V8_2共通] 境界エントリー排除（BT 系列フラグ。live は session_lib が代替）====
+        # signup の消化は変えず、注文だけ間引く＝MESA V8_2 検証ハーネスと同一の作用点。
+        if self._entry_block is not None and i < len(self._entry_block) and self._entry_block[i]:
+            orders = [od for od in orders if od.get("t") != "entry"]
+
+        self._prev_size = size
+        return orders
+
+    # ---- live: 確定足ごと（バッファ再計算 → 決定。BT高速パスと同一結果）----
+    def on_bar(self, bar) -> list[dict]:
+        self._ts.append(bar.ts); self._o.append(bar.open); self._h.append(bar.high)
+        self._l.append(bar.low); self._c.append(bar.close)
+        if len(self._c) > self.W:
+            self._ts.pop(0); self._o.pop(0); self._h.pop(0); self._l.pop(0); self._c.pop(0)
+        if len(self._c) < 3:        # 極小本数スキップ（step の i<2 と同条件）
+            return []
+        H = np.asarray(self._h, float); L = np.asarray(self._l, float); C = np.asarray(self._c, float)
+        A = self._compute_indicators(H, L, C, pd.DatetimeIndex(self._ts))
+        orders = self._decide_at(A, len(C) - 1) or []
+        return self._session_gate(orders, getattr(bar, "ts", None))
+
+
+def build():
+    return DT_Stochastic()

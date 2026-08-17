@@ -1,0 +1,27 @@
+{
+  "MESA_Stochastic": {
+    "params": {
+      "band": 1.0,
+      "tp1": 1.2,
+      "tp2": 2.0
+    },
+    "val_gain": 0.0
+  },
+  "DT_Stochastic": {
+    "params": {
+      "band": 1.0,
+      "tp1": 1.2,
+      "tp2": 2.5
+    },
+    "val_gain": 0.0
+  },
+  "TSI_Stochastic": {
+    "params": {
+      "band": 1.0,
+      "tp1": 1.2,
+      "tp2": 2.5
+    },
+    "val_gain": 43800.0
+  },
+  "Momentum_Combo": null
+}

@@ -1,0 +1,11 @@
+strategy : Swing_Ride_Portfolio
+version  : V1 (manifest version=1)
+interval : 15分
+
+{
+  "name": "Swing_Ride_Portfolio",
+  "interval": 15,
+  "warmup_bars": 700,
+  "version": 1,
+  "label": "V1"
+}

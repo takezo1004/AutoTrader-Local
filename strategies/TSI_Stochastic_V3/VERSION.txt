@@ -1,0 +1,11 @@
+strategy : TSI_Stochastic
+version  : V3 (manifest version=4)
+interval : 15分
+
+{
+  "name": "TSI_Stochastic",
+  "interval": 15,
+  "warmup_bars": 500,
+  "version": 4,
+  "label": "V3"
+}

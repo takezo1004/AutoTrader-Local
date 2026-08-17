@@ -1,0 +1,11 @@
+strategy : Swing_Ride_Stochastic_Long
+version  : V5 (manifest version=5)
+interval : 15分
+
+{
+  "name": "Swing_Ride_Stochastic_Long",
+  "interval": 15,
+  "warmup_bars": 700,
+  "version": 5,
+  "label": "V5"
+}

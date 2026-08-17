@@ -1,0 +1,6 @@
+{
+  "name": "CMF_Stochastic",
+  "interval": 15,
+  "warmup_bars": 300,
+  "version": 2
+}

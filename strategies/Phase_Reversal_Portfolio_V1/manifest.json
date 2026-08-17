@@ -1,0 +1,7 @@
+{
+  "name": "Phase_Reversal_Portfolio",
+  "interval": 15,
+  "warmup_bars": 700,
+  "version": 1,
+  "label": "V1"
+}

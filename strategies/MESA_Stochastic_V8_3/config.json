@@ -1,0 +1,55 @@
+{
+  "_comment": "MESA Stochastic V8_3 FibSync 3Split パラメータ正本。各 _grp コメント＝そのパラメータの意味と設定方法。値の変更は必ず4年較正BT（新形式データ・run_pine_fast）で全年PFを確認してから。表示系・SQ・固定定数（HP48/SuperSmoother10）はパラメータ化しない。",
+
+  "_grp_osc": "基軸オシレーター＝hl2→ハイパスフィルタ(48)→SuperSmoother→ストキャス正規化（前段変換なし・Pine input: Length）。stoch_length は正規化窓。20 が確定値＝変更すると全シグナルのタイミングが動くため単独調整はしない",
+  "stoch_length": 20,
+
+  "_grp_zz60": "判定軸 ZZ60（60分相当ジグザグ・Pine: len_60m_zz / offset_60m / offset_60m_max）。zz60_length=ピボット確定の左右本数。新形式データでの最適=5（4=悪化・5>6>7 の山形・2026-07-24 スイープ確定。旧形式時代の最適は7＝セッション毎に足が1本減った分だけ確定を速める）。threshold=反転認定の最小値幅（円）・threshold_max=上限。dir60（上昇/下降スイング）と TP の R 計算（直近 zz60 安値）の土台＝動かすなら threshold と合わせて再検証",
+  "zz60_length": 7,
+  "zz60_threshold": 200.0,
+  "zz60_threshold_max": 500.0,
+
+  "_grp_phase": "phase 移行の確認本数（Pine: i_n_transition_bars）。6フェーズ（peak/down_start/downtrend/bottom/up_start/uptrend）の遷移を n 本で確定。小さいほど敏感・大きいほど鈍い",
+  "n_transition_bars": 8,
+
+  "_grp_fibsync": "FibSync 押し/戻りの深さ判定（Pine: useFibSync / fib_depth / fib_K）。fib_depth=スイングに対する押しの深さ比率のしきい値。plateau は 0.55〜0.65（保守端 0.55 を採用中・0.7 で 2025 年が崩れる）。fib_K=判定に使うピボット数。dn 側は hold 版固定（底打ち後の新安値で無効化）",
+  "fib_depth": 0.55,
+  "fib_K": 7,
+
+  "_grp_trend": "順張り枝（トレンド押し目買い）。dir60=+1 かつ up_start/uptrend 限定で、trend_band の上抜き再クロス＋up_bot(fib_depth) AND で発火。trend_band は -0.3/-0.4 で plateau・-0.5 から減衰＝この2点以外に動かさない。use_trend_branch=false で逆張り枝のみになる",
+  "use_trend_branch": true,
+  "trend_band": -0.5,
+
+  "_grp_div": "弱気ダイバージェンス・ゲート（順張り枝のみ・逆張り枝には適用しない＝適用すると equity 悪化を実測済）。div_thresh=山の高さ差のしきい値・div_window=探索窓（本）。8通りの感度で同方向を確認済＝微調整の価値は薄い",
+  "use_trend_div_gate": true,
+  "div_thresh": 0.4,
+  "div_window": 150,
+
+  "_grp_tp": "3Split TP（モード C 固定＝zz60 安値基準 R・SL なし）。R=|建値−約定バーの zz60 安値|、TP1=建値+tp1_R×R（1枚）・TP2=建値+tp2_R×R（1枚）・残1枚は under（upper_band 下抜き）で成行全決済。tp1_R/tp2_R は全レジーム検証済＝変更禁止（変えるなら4年+年別で再検証）",
+  "tp1_R": 1.5,
+  "tp2_R": 3.0,
+
+  "_grp_struct_exit": "構造損切り SE_PSL（受け入れ確認型）。エントリー時に PSL（直前完了セッションの安値）の上にいた玉のみ監視。終値が PSL を割って grace 本以内に終値回復しなければ次バー始値で全決済し、under クロスまで新規封鎖。grace は 8〜16 で滑らか＝8 採用（DD 最小）。★適格条件（PSL の上のみ）は絶対に外さない＝外すと深い逆張り玉を大量処刑し PF 崩壊（実測済）。struct_exit=false で機構ごと停止",
+  "struct_exit": true,
+  "struct_exit_grace": 8,
+
+  "_grp_timeout": "タイムアウト撤退（即死エントリーの時間切り）。timeout_bars 本経過しても MaxFE（建値からの最大順行）が timeout_maxfe_pct% 未満、かつ timeout_require_no_floor=true なら床なし（最も高い安値<建値）も条件に、次バー始値で全決済。bars は 10〜16 で全て正＝12 採用。勝ちトレードの9割超は 12 本以内に +0.1% 到達済みが根拠。ハードストップ（%固定SL）は全水準で純益毀損＝不採用確定・追加しない。timeout_exit=false で機構ごと停止",
+  "timeout_exit": true,
+  "timeout_bars": 12,
+  "timeout_maxfe_pct": 0.1,
+  "timeout_require_no_floor": true,
+
+  "_grp_allow_long": "逆張り枝の phase 別採用フラグ（Pine: allow_long_<phase>）。順張り枝は参照しない（up_start/uptrend 固定）。uptrend=false が確定形＝上昇継続中の逆張りは取らない",
+  "allow_long": {"peak": true, "down_start": true, "downtrend": true, "bottom": true, "up_start": true, "uptrend": false},
+
+  "_grp_upperBand": "phase 別 upperBand＝出口 under 判定のしきい値（Pine: upperBand_<phase>）。オシレーターがこの水準を下抜きクロスしたら残玉を成行全決済",
+  "upper_band": {"peak": 0.8, "down_start": 0.8, "downtrend": 0.8, "bottom": 0.8, "up_start": 0.8, "uptrend": 0.8},
+
+  "_grp_lowerBand": "phase 別 lowerBand＝逆張り枝のエントリーしきい値（Pine: lowerBand_<phase>）。この水準の上抜き再クロスで発火。±0.05〜0.1 どちらへ動かしても全年悪化＝鋭い最適・動かさない",
+  "lower_band": {"peak": -0.8, "down_start": -0.8, "downtrend": -0.8, "bottom": -0.8, "up_start": -0.8, "uptrend": -0.8},
+
+  "_grp_engine": "ローカルエンジン実行用（Pine input ではない）。qty_per_entry=3枚建て（3Split の土台・全戦略共通）。warmup_bars=指標安定に必要な先頭本数。window=live のスライドバッファ長",
+  "qty_per_entry": 3,
+  "warmup_bars": 500,
+  "window": 500
+}

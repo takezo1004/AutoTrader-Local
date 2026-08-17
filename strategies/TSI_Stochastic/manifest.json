@@ -1,0 +1,6 @@
+{
+  "name": "TSI_Stochastic",
+  "interval": 15,
+  "warmup_bars": 500,
+  "version": 2
+}

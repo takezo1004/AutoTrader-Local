@@ -1,0 +1,7 @@
+{
+  "name": "Phase_Reversal_Stochastic",
+  "interval": 15,
+  "warmup_bars": 700,
+  "version": 4,
+  "label": "V4"
+}

@@ -1,0 +1,11 @@
+strategy : MESA_Stochastic
+version  : V8_3 (manifest version=5)
+interval : 15分
+
+{
+  "name": "MESA_Stochastic",
+  "interval": 15,
+  "warmup_bars": 500,
+  "version": 5,
+  "label": "V8_3"
+}

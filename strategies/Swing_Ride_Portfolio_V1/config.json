@@ -1,0 +1,13 @@
+{
+ "_comment": "Swing_Ride_Portfolio V1 パラメータ（2026-08-05 新設）。Swing_Ride シリーズ3本を『枠1つ・早い者勝ち』で束ねる合成戦略。売買のパラメータは各サブ戦略の config.json が正本＝ここには置かない（サブの版を上げれば自動で反映される）。4年 n=1194 PF1.76 +17,330,937円 DD−855,250円。照合＝work/v1_bt.py の EXPECT。",
+ "_grp_priority": "サインが同じ足で重なったとき、どれを優先して枠に入れるか。4年の測定では枠を取った回数はストキャス456／モメンタム371／ダブルDT367で、優先順を変えても大勢に影響はない（重なりが1割しかないため）。",
+ "priority": [
+  "Swing_Ride_Stochastic_Long",
+  "Swing_Ride_DoubleDT",
+  "Swing_Ride_Momentum"
+ ],
+ "_grp_engine": "ローカルエンジン実行用。qty_per_entry=3枚建て（サブと同じ）。warmup_bars=700＝サブの板厚バッファ（thick_win 500+100=600）を live 予熱で満たす値（2026-08-06）。session_enabled=合成後の注文に1回だけセッション制御をかける（サブ側は無効化される）。",
+ "qty_per_entry": 3,
+ "warmup_bars": 700,
+ "session_enabled": true
+}

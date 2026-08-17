@@ -1,0 +1,330 @@
+{
+  "generated_at": "2026-06-29T12:58:56.448207+09:00",
+  "execution_date": "2026-06-29",
+  "scope": "Major SQ only (3/6/9/12) - Large(NK225)/Mini(NK225M) center contract rolls",
+  "coverage": {
+    "first_entry": "2021-06",
+    "last_entry": "2027-12",
+    "total_entries": 27,
+    "past_calculated_count": 19,
+    "jpx_excel_count": 8
+  },
+  "source": {
+    "future_excel_urls": [
+      "https://www.jpx.co.jp/derivatives/rules/last-trading-day/tvdivq0000004gz8-att/2026_indexfutures_options_1_j.xlsx",
+      "https://www.jpx.co.jp/derivatives/rules/last-trading-day/tvdivq0000004gz8-att/2027_indexfutures_options_1_j.xlsx"
+    ],
+    "past_method": "calculated (2nd Friday of 3/6/9/12, holiday-adjusted jpholiday)"
+  },
+  "session_close_history": [
+    {
+      "start_date": "2024-11-05",
+      "close_time_jst": "15:45",
+      "regime_label": "post-2024-11-05 (TSE extension)"
+    },
+    {
+      "start_date": "1900-01-01",
+      "close_time_jst": "15:15",
+      "regime_label": "pre-2024-11-05 (J-GATE legacy)"
+    }
+  ],
+  "entries": [
+    {
+      "year_month": "2021-06",
+      "contract_code": "M2106",
+      "last_trading_day": "2021-06-10",
+      "session_close_at": "2021-06-10T15:15:00+09:00",
+      "session_close_unix_ms": 1623305700000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2021-06-11",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2021-09",
+      "contract_code": "U2109",
+      "last_trading_day": "2021-09-09",
+      "session_close_at": "2021-09-09T15:15:00+09:00",
+      "session_close_unix_ms": 1631168100000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2021-09-10",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2021-12",
+      "contract_code": "Z2112",
+      "last_trading_day": "2021-12-09",
+      "session_close_at": "2021-12-09T15:15:00+09:00",
+      "session_close_unix_ms": 1639030500000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2021-12-10",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2022-03",
+      "contract_code": "H2203",
+      "last_trading_day": "2022-03-10",
+      "session_close_at": "2022-03-10T15:15:00+09:00",
+      "session_close_unix_ms": 1646892900000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2022-03-11",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2022-06",
+      "contract_code": "M2206",
+      "last_trading_day": "2022-06-09",
+      "session_close_at": "2022-06-09T15:15:00+09:00",
+      "session_close_unix_ms": 1654755300000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2022-06-10",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2022-09",
+      "contract_code": "U2209",
+      "last_trading_day": "2022-09-08",
+      "session_close_at": "2022-09-08T15:15:00+09:00",
+      "session_close_unix_ms": 1662617700000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2022-09-09",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2022-12",
+      "contract_code": "Z2212",
+      "last_trading_day": "2022-12-08",
+      "session_close_at": "2022-12-08T15:15:00+09:00",
+      "session_close_unix_ms": 1670480100000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2022-12-09",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2023-03",
+      "contract_code": "H2303",
+      "last_trading_day": "2023-03-09",
+      "session_close_at": "2023-03-09T15:15:00+09:00",
+      "session_close_unix_ms": 1678342500000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2023-03-10",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2023-06",
+      "contract_code": "M2306",
+      "last_trading_day": "2023-06-08",
+      "session_close_at": "2023-06-08T15:15:00+09:00",
+      "session_close_unix_ms": 1686204900000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2023-06-09",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2023-09",
+      "contract_code": "U2309",
+      "last_trading_day": "2023-09-07",
+      "session_close_at": "2023-09-07T15:15:00+09:00",
+      "session_close_unix_ms": 1694067300000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2023-09-08",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2023-12",
+      "contract_code": "Z2312",
+      "last_trading_day": "2023-12-07",
+      "session_close_at": "2023-12-07T15:15:00+09:00",
+      "session_close_unix_ms": 1701929700000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2023-12-08",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2024-03",
+      "contract_code": "H2403",
+      "last_trading_day": "2024-03-07",
+      "session_close_at": "2024-03-07T15:15:00+09:00",
+      "session_close_unix_ms": 1709792100000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2024-03-08",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2024-06",
+      "contract_code": "M2406",
+      "last_trading_day": "2024-06-13",
+      "session_close_at": "2024-06-13T15:15:00+09:00",
+      "session_close_unix_ms": 1718259300000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2024-06-14",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2024-09",
+      "contract_code": "U2409",
+      "last_trading_day": "2024-09-12",
+      "session_close_at": "2024-09-12T15:15:00+09:00",
+      "session_close_unix_ms": 1726121700000,
+      "session_close_regime": "pre-2024-11-05 (J-GATE legacy)",
+      "sq_date": "2024-09-13",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2024-12",
+      "contract_code": "Z2412",
+      "last_trading_day": "2024-12-12",
+      "session_close_at": "2024-12-12T15:45:00+09:00",
+      "session_close_unix_ms": 1733985900000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2024-12-13",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2025-03",
+      "contract_code": "H2503",
+      "last_trading_day": "2025-03-13",
+      "session_close_at": "2025-03-13T15:45:00+09:00",
+      "session_close_unix_ms": 1741848300000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2025-03-14",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2025-06",
+      "contract_code": "M2506",
+      "last_trading_day": "2025-06-12",
+      "session_close_at": "2025-06-12T15:45:00+09:00",
+      "session_close_unix_ms": 1749710700000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2025-06-13",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2025-09",
+      "contract_code": "U2509",
+      "last_trading_day": "2025-09-11",
+      "session_close_at": "2025-09-11T15:45:00+09:00",
+      "session_close_unix_ms": 1757573100000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2025-09-12",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2025-12",
+      "contract_code": "Z2512",
+      "last_trading_day": "2025-12-11",
+      "session_close_at": "2025-12-11T15:45:00+09:00",
+      "session_close_unix_ms": 1765435500000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2025-12-12",
+      "holiday_adjusted": false,
+      "source": "calculated"
+    },
+    {
+      "year_month": "2026-03",
+      "contract_code": "H2603",
+      "last_trading_day": "2026-03-12",
+      "session_close_at": "2026-03-12T15:45:00+09:00",
+      "session_close_unix_ms": 1773297900000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2026-03-13",
+      "holiday_adjusted": false,
+      "source": "jpx_excel"
+    },
+    {
+      "year_month": "2026-06",
+      "contract_code": "M2606",
+      "last_trading_day": "2026-06-11",
+      "session_close_at": "2026-06-11T15:45:00+09:00",
+      "session_close_unix_ms": 1781160300000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2026-06-12",
+      "holiday_adjusted": false,
+      "source": "jpx_excel"
+    },
+    {
+      "year_month": "2026-09",
+      "contract_code": "U2609",
+      "last_trading_day": "2026-09-10",
+      "session_close_at": "2026-09-10T15:45:00+09:00",
+      "session_close_unix_ms": 1789022700000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2026-09-11",
+      "holiday_adjusted": false,
+      "source": "jpx_excel"
+    },
+    {
+      "year_month": "2026-12",
+      "contract_code": "Z2612",
+      "last_trading_day": "2026-12-10",
+      "session_close_at": "2026-12-10T15:45:00+09:00",
+      "session_close_unix_ms": 1796885100000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2026-12-11",
+      "holiday_adjusted": false,
+      "source": "jpx_excel"
+    },
+    {
+      "year_month": "2027-03",
+      "contract_code": "H2703",
+      "last_trading_day": "2027-03-11",
+      "session_close_at": "2027-03-11T15:45:00+09:00",
+      "session_close_unix_ms": 1804747500000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2027-03-12",
+      "holiday_adjusted": false,
+      "source": "jpx_excel"
+    },
+    {
+      "year_month": "2027-06",
+      "contract_code": "M2706",
+      "last_trading_day": "2027-06-10",
+      "session_close_at": "2027-06-10T15:45:00+09:00",
+      "session_close_unix_ms": 1812609900000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2027-06-11",
+      "holiday_adjusted": false,
+      "source": "jpx_excel"
+    },
+    {
+      "year_month": "2027-09",
+      "contract_code": "U2709",
+      "last_trading_day": "2027-09-09",
+      "session_close_at": "2027-09-09T15:45:00+09:00",
+      "session_close_unix_ms": 1820472300000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2027-09-10",
+      "holiday_adjusted": false,
+      "source": "jpx_excel"
+    },
+    {
+      "year_month": "2027-12",
+      "contract_code": "Z2712",
+      "last_trading_day": "2027-12-09",
+      "session_close_at": "2027-12-09T15:45:00+09:00",
+      "session_close_unix_ms": 1828334700000,
+      "session_close_regime": "post-2024-11-05 (TSE extension)",
+      "sq_date": "2027-12-10",
+      "holiday_adjusted": false,
+      "source": "jpx_excel"
+    }
+  ]
+}

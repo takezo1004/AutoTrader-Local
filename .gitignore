@@ -1,0 +1,22 @@
+# N225LocalEngine — ローカル git（履歴・復元用。GitHub へは push しない）
+#
+# 方針：コード・戦略・設計書・カレンダーは追跡する。
+#       実行で変わるユーザー状態と、再生成できるデータは追跡しない。
+
+# 仮想環境・キャッシュ
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# ユーザー状態（登録簿・建玉・取引記録・エンジン状態）＝実行のたびに変わる
+app/state/
+
+# ユーザーデータ・生成物（再取得・再生成できる）
+data/logs/
+data/csv_import/
+data/ohlc_live.parquet
+
+# 破損時の退避
+*.corrupt
+*.corrupt_bak

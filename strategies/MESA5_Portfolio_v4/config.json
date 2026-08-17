@@ -1,0 +1,7 @@
+{
+  "_comment": "5戦略を1戦略・同時1ポジで束ねる合成。priority=採用集合（先頭優先）。CMFはDD主因で除外。",
+  "priority": ["MESA_Stochastic", "DT_Stochastic", "TSI_Stochastic", "Momentum_Combo"],
+  "qty_per_entry": 3,
+  "_session": "セッション制御は共有 session_lib（LocalEngine提供）。SQ=data/sq_calendar.json・時刻/カットオフ=data/session_hours.json が正本。ここは ON/OFF のみ。",
+  "session": { "enabled": true }
+}

@@ -1,0 +1,90 @@
+{
+  "_comment": "★Phase_Reversal_DoubleDT V4（2026-08-13 確定）の設定。★V4 が実際に使うパラメーターだけを載せている（既定OFFの保全機構＝深押し指値・ATRレジーム・上位足ゲート・ランナー方式・ダイバージェンス・FibSync のスイッチ類は載せない）。照合＝verify.py（n=816 / +17,559,107 / DD−403,250）。仕様の正本＝../Phase_Reversal_DoubleDT/design/spec.md（§6-8 入口・§6-9 損切り・§6-10 帯束TP・§6-11 検証）。",
+
+  "_grp_基本": "銘柄=OSE:NK225M1! 15分足・買いのみ・3枚まとめて建てて1枚ずつ返す。",
+  "qty_per_entry": 3,
+  "warmup_bars": 700,
+  "window": 500,
+
+  "_grp_発火": "★発火の定義そのもの。触らない。振り子＝hl2→ハイパス(48)→RSI(26)→SuperSmoother→ストキャス正規化。band_long を下から抜き返した足で発火。",
+  "band_long": -0.8,
+  "rsi_len": 26,
+  "stoch_length": 20,
+
+  "_grp_局面": "60分足ジグザグ（脚の向き）と終値ブレイクの地合い（sticky）で4局面を決める。確定値。",
+  "zz60_length": 7,
+  "zz60_threshold": 200.0,
+  "zz60_threshold_max": 500.0,
+  "zz60_confirm_bars": 3,
+  "zz60_fix_sym": true,
+
+  "_grp_群": "★入る場所＝局面4 × 帯5 × ズレ3。帯を決める数字＝ATR14÷終値（尺度フリー）。境界はこのデータの5分位。fine_off_gap=4年で赤字だった14群（そのまま並べただけ・パラメータ調整なし）。",
+  "fine_src": "atr_pct",
+  "fine_mode": "fixed",
+  "fine_k": 5,
+  "fine_fixed_edges": [0.001116, 0.001456, 0.001833, 0.002442],
+  "fine_gap_win": 500,
+  "fine_off_gap": [
+    "P3L-5/一致", "P1L-3/静か", "P1L-2/荒れ", "P3L-2/荒れ", "P4L-2/荒れ",
+    "P2L-1/一致", "P4L-5/荒れ", "P3L-1/静か", "P3L-1/一致", "P1L-3/一致",
+    "P4L-2/一致", "P4L-4/荒れ", "P4L-2/静か", "P3L-4/静か"
+  ],
+
+  "_grp_入口": "★入口条件は2つだけ。P1L の板厚（出来高をこなしても動かない足では入らない）と、長大陰線待ち。他は全部 false（既定は ON のものがあるので明示的に false を書く）。",
+  "entries": {
+    "P1L": {"use": true, "band": -0.8, "dt_filter": false, "thick_filter": true, "wait": false, "dt_alt_pull": false},
+    "P2L": {"use": true, "band": -0.8, "fib": false},
+    "P3L": {"use": true, "band": -0.8, "fib": false, "div": false, "div_alt_dt": false},
+    "P4L": {"use": true, "band": -0.8, "thick_filter": false}
+  },
+
+  "_grp_長大陰線": "発火足かその1本前に『陰線かつ値幅が2.5ATR以上』があれば、局面に関係なく確認待ち（下降足では発注せず、上昇足か陽転の包み足で発注）。待った玉の損切りは押しの走行最安値−0.25ATR（既存より小さい方）。",
+  "wait_bigdn_atr": 2.5,
+  "wait_stop": "waited",
+  "wait_margin_atr": 0.25,
+
+  "_grp_板厚": "板厚＝(高値−安値)÷出来高 が直近 thick_win 本の下位 thick_lo % に入る足。P1L の入口で使う。",
+  "thick_win": 500,
+  "thick_lo": 20.0,
+
+  "_grp_生DT": "原典 DTOSC（RSI21→StochRSI13→SK=SMA8）。★入口では使わない（全局面 dt_filter=false）。出口の dt_stop（DT のサインが3本以内に無い玉は損切りを dt_stop_pt に浅くする）でだけ使う。",
+  "dt_gate_rsi": 21,
+  "dt_gate_stoch": 13,
+  "dt_gate_sk": 8,
+  "dt_gate_sd": 8,
+  "dt_gate_level": 10.0,
+  "dt_gate_k": 3,
+  "dt_stop_pt": 300.0,
+
+  "_grp_R": "R（リスク1単位）＝建値 − いま買った押しの底。利確はこの倍数。",
+  "r_basis": "swing",
+  "r_min_atr": 0.0,
+  "fib_depth": 0.55,
+  "fib_K": 7,
+
+  "_grp_出口共通": "3枚目は振り子が exit_band を上から割ったら成行で全決済（＝背骨）。構造損切り＝前セッション安値を割ってから grace 本以内に終値回復できなければ全決済。時間切れ＝指定本数たっても伸びず床も無ければ全決済。",
+  "exit_band": 0.8,
+  "struct_exit": true,
+  "struct_exit_grace": 8,
+  "timeout_exit": true,
+  "timeout_bars": 12,
+  "timeout_maxfe_pct": 0.1,
+  "timeout_require_no_floor": true,
+  "tp1_R": 1.5,
+  "tp2_R": 3.0,
+  "hard_stop_pt": 700,
+
+  "_grp_出口場面別": "★段階4-1（2026-08-13）で測り直した損切り＝P1L 600 / P2L 650 / P3L 700 / P4L 500円。−20万以下の負けが7→2件。利確・時間切れは据え置き（28通りすべて現行が最良）。",
+  "exits": {
+    "P1L": {"tp1_R": 2.0, "tp2_R": 6.0, "timeout_bars": 36, "hard_stop_pt": 600.0},
+    "P2L": {"dt_stop": true, "tp1_R": 3.0, "tp2_R": 8.0, "timeout_bars": 36, "hard_stop_pt": 650.0},
+    "P3L": {"dt_stop": true, "tp1_R": 3.5, "tp2_R": 6.0, "timeout_bars": 16, "hard_stop_pt": 700.0},
+    "P4L": {"dt_stop": true, "timeout_bars": 16, "hard_stop_pt": 500.0}
+  },
+
+  "_grp_帯束TP": "★段階4-2（2026-08-13）＝発火足の帯が1・2（低ボラ側）の玉は2枚目の利確を置かず、振り子の決済クロスまで持つ。1枚目は場面別のまま。帯3〜5 は指定しない（現行が最良）。999=置かない。優先順は 帯別→場面別→共通。",
+  "exit_by_band": {
+    "1": {"tp2_R": 999.0},
+    "2": {"tp2_R": 999.0}
+  }
+}

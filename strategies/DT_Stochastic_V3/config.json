@@ -1,0 +1,54 @@
+{
+  "_comment": "DT Stochastic V3 3Split パラメータ正本。各 _grp コメント＝そのパラメータの意味と設定方法。値の変更は必ず4年較正BT（新形式データ・run_pine_fast）で全年PFを確認してから。表示系(show_*)・プルバック(pb_*)・ZZ15・セッション制御(共有 session_lib 側)・固定定数（HP周期48/SuperSmoother10/ATR14）はパラメータ化しない。",
+
+  "_grp_mode": "動作モード（Pine: strategy_mode / allow_dohten）。ALL=順張り/逆張り4state全て。allow_dohten=反対シグナルでのドテン許可",
+  "strategy_mode": "ALL",
+  "allow_dohten": true,
+
+  "_grp_osc": "基軸オシレーター＝hl2→ハイパスフィルタ(48)→RSI(rsi_len)→SuperSmoother→ストキャス正規化（Pine: Length / HpSrc / rsi_len）。DT固有=RSI前段。stoch_length=正規化窓（20が局所最適・±2で悪化）・rsi_len=RSI期間（新形式確定=34。32〜36がDD最良の滑らかなplateau・66〜72は純益+7%だがDD+14%深く不採用＝リスク調整後で34優越・2026-07-24ユーザー確定）。どちらも全シグナルのタイミングに効く基幹",
+  "stoch_length": 20,
+  "hp_source": "hl2",
+  "rsi_len": 26,
+
+  "_grp_zz60": "判定軸 ZZ60（60分相当ジグザグ・Pine: len_60m_zz / offset_60m / offset_60m_max）。zz60_length=ピボット確定の左右本数。新形式データでの最適=5（4=悪化・5>6>7 の山形・2026-07-24 スイープ確定。MESA V8_3 と同じ現象＝新形式はセッション毎に足が1本減るため確定を速める）。threshold=反転認定の最小値幅（円）・threshold_max=上限。dir60 と TP の R 計算の土台",
+  "zz60_length": 5,
+  "zz60_threshold": 200.0,
+  "zz60_threshold_max": 500.0,
+
+  "_grp_phase": "phase 移行の確認本数（Pine: i_n_transition_bars）。6フェーズ遷移を n 本で確定",
+  "n_transition_bars": 8,
+
+  "_grp_fibsync": "FibSync 押し/戻りの深さ判定（Pine: useFibSync / fib_depth / fib_K / i_dn_invalidate_newlow）。fib_depth=押しの深さ比率しきい値（DT確定=0.382）。fib_K=判定ピボット数。dn_invalidate_newlow=底打ち後の新安値で無効化",
+  "use_sync_filter": true,
+  "fib_depth": 0.382,
+  "fib_K": 7,
+  "dn_invalidate_newlow": true,
+
+  "_grp_tp": "3Split TP（Pine: tp_mode_v2 / tp1_R / tp2_R / e_tp1_atr / e_tp2_atr・SLなし）。モード C=zz60 ピボット基準 R（確定）。R=|建値−約定バーの zz60 ピボット|、TP1/TP2=各1枚指値・残1枚=反対サインで成行。E(ATR基準)は予備",
+  "tp_mode": "C",
+  "tp1_R": 1.0,
+  "tp2_R": 2.0,
+  "e_tp1_atr": 1.0,
+  "e_tp2_atr": 3.5,
+
+  "_grp_allow_long": "phase 別採用フラグ Long（Pine: allow_long_<phase>）。uptrend=false が確定形",
+  "allow_long": {"peak": true, "down_start": true, "downtrend": true, "bottom": true, "up_start": true, "uptrend": false},
+  "_grp_allow_short": "phase 別採用フラグ Short（Pine: allow_short_<phase>）。bottom のみ true が確定形",
+  "allow_short": {"peak": false, "down_start": false, "downtrend": false, "bottom": true, "up_start": false, "uptrend": false},
+
+  "_grp_upperBand": "phase 別 upperBand＝Short エントリーしきい値（Pine: upperBand_<phase>）",
+  "upper_band": {"peak": 0.8, "down_start": 0.8, "downtrend": 0.8, "bottom": 0.8, "up_start": 0.8, "uptrend": 0.8},
+  "_grp_lowerBand": "phase 別 lowerBand＝Long エントリーしきい値（Pine: lowerBand_<phase>）",
+  "lower_band": {"peak": -0.8, "down_start": -0.8, "downtrend": -0.8, "bottom": -0.8, "up_start": -0.8, "uptrend": -0.8},
+
+  "_grp_timeout": "タイムアウト撤退（即死エントリーの時間切り・MESA V8_2 由来の共通機構）。timeout_bars 本経過しても MaxFE（建値からの最大順行）が timeout_maxfe_pct% 未満、かつ timeout_require_no_floor=true なら床なし（順行側の床が建値に届かない）も条件に、次バー始値で全決済。timeout_exit=false で機構ごと停止",
+  "timeout_exit": true,
+  "timeout_bars": 12,
+  "timeout_maxfe_pct": 0.15,
+  "timeout_require_no_floor": true,
+
+  "_grp_engine": "ローカルエンジン実行用（Pine input ではない）。qty_per_entry=3枚建て（3Split の土台・全戦略共通）。warmup_bars=指標安定に必要な先頭本数。window=live のスライドバッファ長",
+  "qty_per_entry": 3,
+  "warmup_bars": 500,
+  "window": 500
+}
