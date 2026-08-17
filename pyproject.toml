@@ -1,0 +1,40 @@
+# N225LocalEngine — 配布用 uv プロジェクト定義（M6・基本ルート）
+#
+# 役割：受け手の PC で `uv sync` 一発で「正しい Python 本体＋固定バージョンのライブラリ」を
+#       隔離環境（.venv）に再現する。システム Python とは競合しない（uv が専用 Python を持ち込む）。
+#
+# 依存は LocalEngine の実 import を実測して確定（2026-06-18）：
+#   pandas/numpy        … 戦略ロジック・BT（★golden 再現性に直結するため検証済み版に固定）
+#   pyarrow             … ohlc_live.parquet の読み書き
+#   requests/beautifulsoup4 … 市場カレンダー取得（calendar_fetch・html.parser 使用＝lxml 不要）
+#   openpyxl            … 225Labo xlsx 取込（data_import.read_excel）
+# 不使用＝同梱しない：matplotlib（bt_view は Canvas 描画で非依存）/ scipy / lxml / pywin32（DPAPI は ctypes 直叩き）
+# 標準ライブラリ：tkinter（GUI）/ ctypes（DPAPI）/ urllib（webhook 送出）/ zipfile/ json 等は宣言不要。
+
+[project]
+name = "n225-local-engine"
+version = "2.0.4"
+description = "N225LocalEngine — 全ローカルで日経225先物(15分足)を自動売買する戦略実行基盤（ローカル版）"
+readme = "docs/USER_MANUAL.md"
+requires-python = ">=3.10"
+dependencies = [
+    # ★golden 再現性に直結（浮動小数の差異を避けるため検証済み版に固定）
+    "numpy==2.2.6",
+    "pandas==2.3.3",
+    # データ I/O・外部取得（機能互換が取れていればよいので下限指定）
+    "pyarrow>=14",
+    "requests>=2.28",
+    "beautifulsoup4>=4.12",
+    "openpyxl>=3.1",
+]
+
+[dependency-groups]
+# 開発・検証用（配布物には含めない＝excludelist 対象）。
+dev = [
+    "pytest>=8",
+]
+
+[tool.uv]
+# アプリケーション（pip でインストールして import するライブラリではない）。
+# 実行は `python run_dashboard.py` / `python run_live.py`＝プロジェクト自体はビルド/インストールしない。
+package = false
