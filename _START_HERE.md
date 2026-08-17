@@ -105,7 +105,7 @@
 - **データ＝常に日経225ミニ1本**（執行はミニ/マイクロ独立）＝運用の決定事項。kabu CSV はミニチャートから出力（マイクロと混ぜない）＝`docs/USER_MANUAL.md §5.5` に明記。
 - **ブリッジ出来高修正（実装・ビルド・dev commit 済 `b1c03af`）**：board の `TradingVolume`(当日累積)/`TradingVolumeTime` を抽出し、**ミニのみ転送＋売買高時刻が進んだ時だけ累積増分を計上**（受信側 `OHLCManager` は無変更で既に出来高対応）。発注経路は無影響。ノウハウ＝`N225BrokerBridge/docs/adapters/kabu.md §10`。
 - **確定足 OHLCV 表示**：`app/engine/controller.py` の on_bar_close ラッパで「確定足 … 始値/高値/安値/終値/出来高」をダッシュボード表示（`ohlc_processor` は D13 無傷）。
-- **次の一手**：①**ライブ検証**＝場中にダッシュボード確定足の出来高が妥当か目視（CMF は出来高使用／MESA/DT/Momentum/TSI は不使用）②問題なければブリッジを `distribution/sync_*.ps1` で配布へ → 各リポ push（それまで配布は保留）。③`N225LocalEngine` は現状 git 管理外＝controller/USER_MANUAL 変更はディスク保存のみ。
+- **次の一手**：①**ライブ検証**＝場中にダッシュボード確定足の出来高が妥当か目視（CMF は出来高使用／MESA/DT/Momentum/TSI は不使用）②問題なければブリッジを `distribution/sync_*.ps1` で配布へ → 各リポ push（それまで配布は保留）。③`N225LocalEngine` は **2026-08-18 にローカル git 管理下へ**（初回コミット `d8f78d8`・StrategyBuilder と同方針＝ローカルのみ・GitHub へは push しない）。除外＝`.venv`/`app/state`/`data/logs`/`data/csv_import`/`ohlc_live.parquet`。
 
 ## ★現在地（2026-06-16 実装・最優先で読む）— M1〜M4＋ダッシュボード 完成
 > 詳細は `docs/devlog/2026-06-16.md`。**新コードは全て `app/` 配下**（旧トップレベルは破棄候補）。
