@@ -48,7 +48,7 @@ def to_tv_time(ts) -> str:
 
 def position_diff_to_webhook(prev_dir: int, prev_qty: int, cur_dir: int, cur_qty: int,
                              name: str, interval: int = 15,
-                             passphrase: str = "", ticker: str = "OSE:NK225M1!",
+                             passphrase: str = "", ticker: str = "NK225M1!",
                              order_price: float = 0,
                              bar: dict | None = None, order_id: str = "",
                              exchange: str = "OSE") -> dict | None:
