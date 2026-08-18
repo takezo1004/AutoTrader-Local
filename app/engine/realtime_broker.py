@@ -79,6 +79,7 @@ class RealtimeBroker:
         self._fo = self._fh = self._fl = None
         self._last_close = None
         self._last_ts = None
+        self._last_bar = None               # 直近の確定足（webhook の bar・TradingView と同一形式）
         self._nfills = 0                    # 記録済み fill 数（新規 fill=決済イベント検出用）
         self._last_tid = self.bk.trade_id   # 新規建玉検出用（trade_id 増加＝新規エントリー）
 
@@ -112,13 +113,29 @@ class RealtimeBroker:
             px = float(self._last_close or 0.0)
         return px
 
+    def _order_id(self, prev, cur) -> str:
+        """TradingView の {{strategy.order.id}} 相当。
+
+        決済＝発火した建ち注文の名前（TP1_C / PSTOP など＝PineBroker の exit_reason）。
+        新規・ドテン＝建玉の通し番号から作る（TradingView の entry id と同じ位置づけ）。
+        """
+        if cur[0] != 0 and (prev[0] == 0 or prev[0] != cur[0]):
+            tid = getattr(self.bk, "trade_id", 0)
+            return f"entry_{tid}" if tid else "entry"
+        fills = getattr(self.bk, "fills", None)
+        if fills:
+            return str(fills[-1].get("exit_reason", "") or "")
+        return ""
+
     def _emit(self, prev, order_price: float = 0) -> None:
         cur = self._snap()
         if not order_price:
             order_price = self._fill_price(prev, cur)
         wh = position_diff_to_webhook(prev[0], prev[1], cur[0], cur[1], self.name, self.interval,
                                       passphrase=self.passphrase, ticker=self.ticker,
-                                      order_price=order_price)
+                                      order_price=order_price,
+                                      bar=getattr(self, "_last_bar", None),
+                                      order_id=self._order_id(prev, cur))
         if wh:
             self.webhooks.append(wh)
             sender = self.sender            # ★別スレッド(set_enabled)が None へ差し替え得るので捕捉してから判定
@@ -201,6 +218,8 @@ class RealtimeBroker:
         ts = candle.get("datetime")
         self._last_close = c
         self._last_ts = ts
+        self._last_bar = {"time": ts, "open": o, "high": h, "low": l, "close": c,
+                          "volume": float(candle.get("volume", 0) or 0)}
 
         if self._new_bar:
             # この足は tick を1つも受けていない（ダミー足/静かな窓）→ 足 OHLC で A1 を代行
