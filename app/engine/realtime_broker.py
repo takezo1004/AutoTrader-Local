@@ -84,8 +84,34 @@ class RealtimeBroker:
     def _snap(self):
         return (self.bk.pos_dir, self.bk.pos_qty)
 
+    def _fill_price(self, prev, cur) -> float:
+        """この遷移が **実際に約定した値段** を返す（webhook の order_price に載せる）。
+
+        ★なぜ必要か（2026-08-18）：order_price=0 で送ると、ブリッジは「対当（BestMarket）」＝
+          kabu 仕様の **指値** として FrontOrderType=20 / Price=0 を送るため、kabu が
+          「パラメータ不正：値段指定エラー」(4002017) で必ず拒否する。TradingView 版は
+          {{strategy.order.price}} に実値が入るので起きない。ローカル版も同じ形で値段を載せる。
+
+        新規・ドテン＝建値（avg_price）／部分返済・全量返済＝直近 fill の exit_price。
+        いずれも取れないときは直近の終値へフォールバックする。
+        """
+        px = 0.0
+        if cur[0] != 0 and (prev[0] == 0 or prev[0] != cur[0]):      # 新規・ドテン
+            px = float(getattr(self.bk, "avg_price", 0.0) or 0.0)
+        else:                                                         # 部分返済・全量返済
+            fills = getattr(self.bk, "fills", None)
+            if fills:
+                px = float(fills[-1].get("exit_price", 0.0) or 0.0)
+        if not px:
+            px = float(self._last_close or 0.0)
+        if not px:
+            return 0.0
+        return round(px / TICK_JPY) * TICK_JPY                        # 呼値（5円）へ丸める
+
     def _emit(self, prev, order_price: float = 0) -> None:
         cur = self._snap()
+        if not order_price:
+            order_price = self._fill_price(prev, cur)
         wh = position_diff_to_webhook(prev[0], prev[1], cur[0], cur[1], self.name, self.interval,
                                       passphrase=self.passphrase, ticker=self.ticker,
                                       order_price=order_price)
