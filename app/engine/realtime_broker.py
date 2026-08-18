@@ -15,6 +15,8 @@ running 足（_fo/_fh/_fl）を tick で更新し、_fill_resting に渡す＝�
 """
 from __future__ import annotations
 
+import json
+
 import pandas as pd
 
 from .contract import Bar
@@ -121,9 +123,16 @@ class RealtimeBroker:
             self.webhooks.append(wh)
             sender = self.sender            # ★別スレッド(set_enabled)が None へ差し替え得るので捕捉してから判定
             try:
-                dbg(f"[{self.name}] webhook生成 {wh.get('order_action')} x{wh.get('order_contracts')} "
-                    f"@{order_price or '-'} pos {prev[0]}x{prev[1]}→{cur[0]}x{cur[1]} "
+                # ★2026-08-18 修正：order_action / order_contracts / order_price は wh["strategy"] の
+                #   中にある。トップレベルを見ていたため常に None・@- と出力され、
+                #   「何を送ったか」がログから分からなかった（8/18 の不達調査で判明）。
+                st = wh.get("strategy", {})
+                dbg(f"[{self.name}] webhook生成 {st.get('order_action')} x{st.get('order_contracts')} "
+                    f"@{st.get('order_price') or '-'} pos {prev[0]}x{prev[1]}→{cur[0]}x{cur[1]} "
                     f"→ {'送出(有効)' if sender is not None else '記録のみ(無効=送出せず)'}")
+                if sender is not None:      # 送るものは全文を残す（パスフレーズは伏せる）
+                    dbg(f"[{self.name}] 送出内容 "
+                        f"{json.dumps({**wh, 'passphrase': '***'}, ensure_ascii=False)}")
             except Exception:
                 pass
             if sender is not None:
