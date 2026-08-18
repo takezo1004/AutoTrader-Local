@@ -80,6 +80,17 @@ class BridgeSender:
         self._ensure_worker()
         self._queue.put((self, webhook))
 
+    # ★ブリッジは「発注しなかった」場合も HTTP 200 を返す（本文に理由の名前が入る）。
+    #   200 を成功と扱うと、自動売買 OFF・パスフレーズ不一致・戦略未登録でも
+    #   「[売買・本番]」と記録され、実際には無い建玉を持ったことになる（2026-08-18 判明）。
+    DISPATCHED = ("NewOrderDispatched_", "ExitOrderDispatched_", "DotenDispatched_")
+    NOT_ORDERED = {
+        "AutoTradeDisabled_":     "ブリッジの自動売買が OFF",
+        "Authenticated_Failed":   "パスフレーズ不一致",
+        "Interpretation_Failed":  "ブリッジが内容を解釈できず",
+        "Ignored_":               "ブリッジが見送り（戦略未登録・無効など）",
+    }
+
     def _send_sync(self, webhook: dict) -> str | None:
         try:
             data = json.dumps(webhook).encode("utf-8")
@@ -88,7 +99,13 @@ class BridgeSender:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 body = resp.read().decode("utf-8", "replace")
             self.last_outcome = body
-            self.on_log(fmt_trade(webhook, "本番", suffix=str(body)))
+            name = (body or "").strip()
+            if name in self.DISPATCHED:
+                self.on_log(fmt_trade(webhook, "本番", suffix=name))
+            else:
+                reason = self.NOT_ORDERED.get(name, f"不明な応答: {name}")
+                self.on_log(f"⚠ 未発注 {webhook.get('alert_name')}: {reason}"
+                            f"（ブリッジは受信したが発注していません）")
             return body
         except Exception as e:
             self.on_log(f"注文エラー {webhook.get('alert_name')}: {e}")
