@@ -94,6 +94,10 @@ class RealtimeBroker:
 
         新規・ドテン＝建値（avg_price）／部分返済・全量返済＝直近 fill の exit_price。
         いずれも取れないときは直近の終値へフォールバックする。
+
+        ★丸めは行わない。値の出どころは足の OHLC（市場の値＝もともと呼値単位）と、
+          PineBroker が submit 時に `_round_tick` 済みの limit/stop だけ。ここで丸め直すと
+          TradingView（{{strategy.order.price}} をそのまま送る）と挙動が変わる。
         """
         px = 0.0
         if cur[0] != 0 and (prev[0] == 0 or prev[0] != cur[0]):      # 新規・ドテン
@@ -104,9 +108,7 @@ class RealtimeBroker:
                 px = float(fills[-1].get("exit_price", 0.0) or 0.0)
         if not px:
             px = float(self._last_close or 0.0)
-        if not px:
-            return 0.0
-        return round(px / TICK_JPY) * TICK_JPY                        # 呼値（5円）へ丸める
+        return px
 
     def _emit(self, prev, order_price: float = 0) -> None:
         cur = self._snap()
