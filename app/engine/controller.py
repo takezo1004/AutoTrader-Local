@@ -28,7 +28,7 @@ from .bridge_process import BridgeProcess, DEFAULT_BRIDGE_EXE
 from .strategy_loader import load_strategy, validate_folder
 from .bridge_secret import read_bridge_passphrase
 
-# ★シークレットコード(passphrase)は「ブリッジ(appsettings.Local.json・DPAPI)から起動時に取得」し、
+# ★パスフレーズ(passphrase)は「ブリッジ(appsettings.Local.json・DPAPI)から起動時に取得」し、
 #   メモリ上だけで保持する。ローカル版は**外部ファイルに保存しない**（旧 secret.json は廃止）。
 #   webhook の両端で一致必須の共有値なので、ブリッジを正として取得する。
 
@@ -131,7 +131,7 @@ class LocalEngineController:
             _flog.set_debug(bool(self._settings.get("debug_log", True)))
         except Exception:
             pass
-        # ★シークレットコードは「ブリッジから取得」してメモリ保持（外部ファイルに保存しない）。
+        # ★パスフレーズは「ブリッジから取得」してメモリ保持（外部ファイルに保存しない）。
         self.passphrase = read_bridge_passphrase()                   # 起動時に自動取得（無ければ ""）
         if self._settings.pop("passphrase", None) is not None:       # 旧 settings.json 内の平文があれば除去のみ
             self._write_settings()
@@ -196,9 +196,9 @@ class LocalEngineController:
         self.settings_path.write_text(
             json.dumps(self._settings, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # ───────────── シークレットコード（ブリッジから取得・メモリのみ・ファイル保存なし）─────────────
+    # ───────────── パスフレーズ（ブリッジから取得・メモリのみ・ファイル保存なし）─────────────
     def set_passphrase(self, secret: str) -> None:
-        """シークレットコードをメモリに設定し全 broker へ反映（外部ファイルには保存しない）。"""
+        """パスフレーズをメモリに設定し全 broker へ反映（外部ファイルには保存しない）。"""
         self.passphrase = secret or ""
         for rb in self.engine._brokers.values():
             rb.passphrase = self.passphrase
@@ -207,7 +207,7 @@ class LocalEngineController:
         """ブリッジ(appsettings.Local.json・DPAPI)から passphrase を取得しメモリに設定。戻り＝取得値。"""
         v = read_bridge_passphrase()
         self.set_passphrase(v)
-        self.on_log("シークレットコードをブリッジから取得" + ("" if v else "（取得できませんでした）"))
+        self.on_log("パスフレーズをブリッジから取得" + ("" if v else "（取得できませんでした）"))
         return v
 
     # ───────────── 取引記録（仮想/本番・新規/決済を発生順に累積・trade_log.jsonl）─────────────

@@ -6,7 +6,7 @@
   - インターバル（interval・分）  … 足（ブリッジのキー2）。(alert_name, interval) で一意。
   - 説明（description・任意）
   - 有効（enabled）… 実行可否
-  - シークレットコード（passphrase）… ブリッジ全体共通（全 webhook 付与・設定として保存）
+  - パスフレーズ（passphrase）… ブリッジ全体共通（全 webhook 付与・設定として保存）
 新規時は manifest から alert_name/interval を既定にする。
 """
 from __future__ import annotations
@@ -72,7 +72,7 @@ class RegisterDialog(tk.Toplevel):
         row(0, "ショートネーム", ttk.Entry(grid, textvariable=self.v_alert), "ブリッジの戦略名")
         row(1, "インターバル(分)", ttk.Entry(grid, textvariable=self.v_ivl, width=8), "足")
         row(2, "説明", ttk.Entry(grid, textvariable=self.v_desc), "任意")
-        row(3, "シークレットコード", ttk.Entry(grid, textvariable=self.v_secret, show="•"), "ブリッジ共通")
+        row(3, "パスフレーズ", ttk.Entry(grid, textvariable=self.v_secret, show="•"), "ブリッジ共通")
         ttk.Checkbutton(grid, text="有効（登録後すぐ実行可否を ON）", variable=self.v_enabled).grid(row=4, column=1, sticky="w", pady=6)
 
         btns = tk.Frame(self, bg=BG); btns.pack(side="bottom", fill="x", pady=12, padx=14)
