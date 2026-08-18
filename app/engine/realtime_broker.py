@@ -58,7 +58,8 @@ def _orders_brief(orders) -> str:
 
 class RealtimeBroker:
     def __init__(self, strategy, name: str, interval: int = 15, qty_per_entry: int | None = None,
-                 sender=None, passphrase: str = "", ticker: str = "OSE:NK225M1!"):
+                 sender=None, passphrase: str = "", ticker: str = "NK225M1!",
+                 exchange: str = "OSE"):
         self.strategy = strategy
         self.name = name
         self.interval = interval
@@ -67,6 +68,7 @@ class RealtimeBroker:
         self.sender = sender                # .send(webhook) を持つオブジェクト or None（None=注文しない）
         self.passphrase = passphrase
         self.ticker = ticker
+        self.exchange = exchange
         self.webhooks: list[dict] = []      # 注文した webhook（dry-run/監視・最後の close で EOD も）
         self.on_event = None                # 取引イベント記録フック: on_event(dict) を呼ぶ（新規/決済）
         self.reset()
@@ -135,7 +137,8 @@ class RealtimeBroker:
                                       passphrase=self.passphrase, ticker=self.ticker,
                                       order_price=order_price,
                                       bar=getattr(self, "_last_bar", None),
-                                      order_id=self._order_id(prev, cur))
+                                      order_id=self._order_id(prev, cur),
+                                      exchange=getattr(self, "exchange", "OSE"))
         if wh:
             self.webhooks.append(wh)
             sender = self.sender            # ★別スレッド(set_enabled)が None へ差し替え得るので捕捉してから判定
