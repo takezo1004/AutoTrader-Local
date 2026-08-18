@@ -2,7 +2,7 @@
 """設定ダイアログ（グローバル・手動セットアップ一式）。
 
 手動で全て設定できるように、エンジンのグローバル設定を1画面に集約:
-  - シークレットコード（passphrase・全 webhook 共通・ブリッジと一致させる）
+  - パスフレーズ（passphrase・全 webhook 共通・ブリッジと一致させる）
   - ブリッジ exe パス（外部ブリッジ起動先・配布時はインストール先）
   - ブリッジ URL（webhook 注文先）
   - 蓄積データ parquet パス（内蔵BT・warmup 用）
@@ -61,8 +61,8 @@ class SettingsDialog(tk.Toplevel):
                           cursor="hand2", bd=0, padx=8).grid(row=r, column=2, padx=(6, 0))
             return e
 
-        # シークレットコード＋👁表示/非表示トグル
-        self.secret_entry = field(0, "シークレットコード", self.v_secret)
+        # パスフレーズ＋👁表示/非表示トグル
+        self.secret_entry = field(0, "パスフレーズ", self.v_secret)
         self._secret_shown = False
         self.eye_btn = tk.Button(g, text="👁", command=self._toggle_secret, bg=PANEL_BG_HI, fg=FG,
                                  relief=tk.FLAT, cursor="hand2", bd=0, padx=8,
@@ -101,7 +101,7 @@ class SettingsDialog(tk.Toplevel):
         tk.Label(disp, text="※ ライト＝白い背景（年配の方に見やすい）。テーマと文字サイズは両方選べます。変更は再起動で反映。",
                  bg=BG, fg=FG_DIM, font=("Segoe UI", 8)).pack(anchor="w", pady=(4, 0))
 
-        tk.Label(self, text="※ シークレットコードはブリッジから取得（起動時に自動・[ブリッジから取得]で再取得）。外部ファイルには保存しません。",
+        tk.Label(self, text="※ パスフレーズはブリッジから取得（起動時に自動・[ブリッジから取得]で再取得）。外部ファイルには保存しません。",
                  bg=BG, fg=FG_DIM, font=("Segoe UI", 8)).pack(anchor="w", padx=16, pady=(8, 0))
 
         btns = tk.Frame(self, bg=BG); btns.pack(side="bottom", fill="x", pady=14, padx=16)
@@ -117,7 +117,7 @@ class SettingsDialog(tk.Toplevel):
         return b
 
     def _toggle_secret(self):
-        """👁 でシークレットコードの表示/非表示を切り替え。"""
+        """👁 でパスフレーズの表示/非表示を切り替え。"""
         self._secret_shown = not self._secret_shown
         self.secret_entry.config(show="" if self._secret_shown else "•")
         self.eye_btn.config(text="🙈" if self._secret_shown else "👁")
@@ -129,7 +129,7 @@ class SettingsDialog(tk.Toplevel):
         if not v:
             messagebox.showwarning(
                 "取得できません",
-                "ブリッジからシークレットコードを取得できませんでした。\n"
+                "ブリッジからパスフレーズを取得できませんでした。\n"
                 "ブリッジ側でパスフレーズを設定（保存）してから再取得してください。", parent=self)
             return
         self._secret_shown = True                      # 取得できたら見えるように
