@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""ブリッジ（N225BrokerBridge・別製品の C#/WPF アプリ）のプロセス制御＋kabu 確認。
+"""ブリッジ（別製品の C#/WPF アプリ・kabu 版 N225BrokerBridge / 楽天RSS版 N225RssBrokerBridge）のプロセス制御＋証券会社ツール確認。
 
 ダッシュボードから「kabu 確認 → ブリッジ起動 → オートトレード起動」を一元操作するための土台。
 既存 `n225_brokerbridge_dashboard.py` の方式を踏襲:
@@ -26,17 +26,37 @@ KABU_HEALTH_URL = "http://localhost:18080/kabusapi/"
 KABU_TIMEOUT = 1.5
 
 
+def process_running(image_name: str) -> bool:
+    """Windows の tasklist でプロセスの有無を見る（追加ライブラリ無し・コンソールを出さない）。"""
+    try:
+        out = subprocess.run(
+            ["tasklist", "/FI", f"IMAGENAME eq {image_name}", "/NH"],
+            capture_output=True, text=True, timeout=5,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        ).stdout or ""
+        return image_name.lower() in out.lower()
+    except Exception:
+        return False
+
+
 class BridgeProcess:
     def __init__(self, exe_path=None, kabu_url: str = KABU_HEALTH_URL, webhook_port: int = 8001,
-                 on_log=None):
+                 on_log=None, health: dict | None = None):
+        # health＝証券会社ツールの稼働確認方法（product_profile の broker_health）。
+        #   {"mode":"http","url":...}      kabu ステーション（API 口に HTTP）
+        #   {"mode":"process","process":..} 楽天 マーケットスピード II（プロセスの有無・RSS に HTTP 口は無い）
         self.exe_path = Path(exe_path) if exe_path else DEFAULT_BRIDGE_EXE
-        self.kabu_url = kabu_url
+        self.health = dict(health or {"mode": "http", "url": kabu_url})
+        self.kabu_url = self.health.get("url") or kabu_url
         self.webhook_port = int(webhook_port)
         self.on_log = on_log or (lambda m: None)
         self._proc: subprocess.Popen | None = None
 
-    # ---- kabu Station 確認（HTTP ヘルスチェック）----
+    # ---- 証券会社ツール確認（kabu＝HTTP ヘルスチェック／楽天＝プロセス）----
     def kabu_ok(self) -> bool:
+        """名前は旧来のまま（呼び出し側互換）。意味は「証券会社ツールが稼働しているか」。"""
+        if str(self.health.get("mode", "http")).lower() == "process":
+            return process_running(str(self.health.get("process") or "MarketSpeed2.exe"))
         try:
             req = urllib.request.Request(self.kabu_url, method="GET")
             with urllib.request.urlopen(req, timeout=KABU_TIMEOUT) as resp:

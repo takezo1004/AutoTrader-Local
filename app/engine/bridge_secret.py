@@ -18,9 +18,21 @@ import os
 from ctypes import wintypes
 from pathlib import Path
 
-_BRIDGE_DIR = Path(os.environ.get("LOCALAPPDATA") or (Path.home() / "AppData" / "Local")) / "N225BrokerBridge"
-DEFAULT_BRIDGE_SETTINGS = _BRIDGE_DIR / "appsettings.Local.json"
+_LOCALAPPDATA = Path(os.environ.get("LOCALAPPDATA") or (Path.home() / "AppData" / "Local"))
+_BRIDGE_DIR = _LOCALAPPDATA / "N225BrokerBridge"
+DEFAULT_BRIDGE_SETTINGS = _BRIDGE_DIR / "appsettings.Local.json"      # kabu 版の既定（後方互換で残す）
 _ENC_PREFIX = "enc:"
+
+
+def bridge_settings_path() -> Path:
+    """製品プロファイル（bridge_product）に従ったブリッジ設定ファイルの場所。
+    kabu 版＝%LOCALAPPDATA%/N225BrokerBridge、楽天RSS版＝%LOCALAPPDATA%/N225RssBrokerBridge。"""
+    try:
+        from .product_profile import load_profile
+        product = str(load_profile().get("bridge_product") or "N225BrokerBridge")
+    except Exception:
+        product = "N225BrokerBridge"
+    return _LOCALAPPDATA / product / "appsettings.Local.json"
 
 
 class _BLOB(ctypes.Structure):
@@ -42,9 +54,10 @@ def _dpapi_unprotect(blob: bytes) -> bytes:
         kernel32.LocalFree(bout.pbData)
 
 
-def read_bridge_passphrase(path=DEFAULT_BRIDGE_SETTINGS) -> str:
-    """ブリッジ設定から webhook passphrase を復号して返す。取得不可なら ""。"""
-    p = Path(path)
+def read_bridge_passphrase(path=None) -> str:
+    """ブリッジ設定から webhook passphrase を復号して返す。取得不可なら ""。
+    path 省略時は製品プロファイルのブリッジ（kabu 版 / 楽天RSS版）を見る。"""
+    p = Path(path) if path else bridge_settings_path()
     if not p.exists():
         return ""
     try:
