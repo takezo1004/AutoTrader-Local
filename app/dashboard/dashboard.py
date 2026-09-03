@@ -87,13 +87,14 @@ class Dashboard:
     def _build_header(self):
         # サブタイトルは廃止。タイトルを縮小し、設定・LED を左寄せにして横幅を詰める。
         h = tk.Frame(self.root, bg=BG, height=46); h.pack(fill=tk.X, padx=16, pady=(10, 6)); h.pack_propagate(False)
-        tk.Label(h, text="N225AutoTrader-Local", font=("Segoe UI Semibold", 14), bg=BG, fg=ACCENT).pack(side=tk.LEFT)
+        tk.Label(h, text=getattr(self.ctrl, "product_title", "N225AutoTrader-Local"), font=("Segoe UI Semibold", 14), bg=BG, fg=ACCENT).pack(side=tk.LEFT)
         # 設定・LED・時計はまとめて右側（時間表示の隣）に寄せる。
         self.lbl_clock = tk.Label(h, text="--:--:--", font=("Consolas", 13), bg=BG, fg=FG_DIM)
         self.lbl_clock.pack(side=tk.RIGHT, padx=(8, 0))
         leds = tk.Frame(h, bg=BG); leds.pack(side=tk.RIGHT, padx=8)
         self.leds = {}
-        for key, cap in (("kabu", "カブ"), ("bridge", "ブリッジ"), ("auto", "オートトレード"), ("feed", "feed")):
+        # LED「カブ」は製品プロファイルで名前が変わる（楽天RSS版＝「楽天」）。キー "kabu" は互換のため固定。
+        for key, cap in (("kabu", getattr(self.ctrl, "broker_label", "カブ")), ("bridge", "ブリッジ"), ("auto", "オートトレード"), ("feed", "feed")):
             self.leds[key] = self._make_led(leds, cap)
         self._cbtn(h, "  ⚙ 設定", self._open_settings, PANEL_BG_HI, fg=FG, pad=4).pack(side=tk.RIGHT, padx=8)
 
@@ -113,7 +114,7 @@ class Dashboard:
         self.bridge_start_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 3))
         self.bridge_stop_btn = self._cbtn(brow2, "  ■  停止", self._stop_bridge, RED, pad=6)
         self.bridge_stop_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(3, 0))
-        tk.Label(c2, text="KABUステーション→ブリッジ起動／注文は戦略有効✓のみ",
+        tk.Label(c2, text=f"{getattr(self.ctrl, 'broker_tool_name', 'カブステーション')}→ブリッジ起動／注文は戦略有効✓のみ",
                  font=("Segoe UI", 9), bg=PANEL_BG, fg=FG_DIM, justify=tk.LEFT,
                  wraplength=360).pack(padx=10, pady=(0, 8), anchor="w")
         # ★③オートトレードカード（起動/停止/仮想トグル）は廃止＝削除。注文は戦略一覧の「有効」で切替。
@@ -412,7 +413,7 @@ class Dashboard:
 
     def _start_bridge(self):
         if not self.ctrl._kabu_ok and not messagebox.askyesno(
-                "確認", "カブステーションが未確認です。ブリッジを起動しますか？"):
+                "確認", f"{getattr(self.ctrl, 'broker_tool_name', 'カブステーション')}が未確認です。ブリッジを起動しますか？"):
             return
         self.ctrl.start_bridge()
 

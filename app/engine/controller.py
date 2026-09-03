@@ -27,6 +27,7 @@ from .bridge_sender import BridgeSender, VirtualSink
 from .bridge_process import BridgeProcess, DEFAULT_BRIDGE_EXE
 from .strategy_loader import load_strategy, validate_folder
 from .bridge_secret import read_bridge_passphrase
+from .product_profile import load_profile
 
 # ★パスフレーズ(passphrase)は「ブリッジ(appsettings.Local.json・DPAPI)から起動時に取得」し、
 #   メモリ上だけで保持する。ローカル版は**外部ファイルに保存しない**（旧 secret.json は廃止）。
@@ -125,6 +126,11 @@ class LocalEngineController:
         self._user_on_log = on_log or (lambda m: None)
         self.start_error: str | None = None     # 直近の起動失敗理由（None=正常）。engine_state に出して可視化。
         self._settings = self._read_settings()
+        # ★製品プロファイル（kabu 版 / 楽天RSS版の既定値・engine/product_profile.json）。無ければ kabu 版。
+        self.profile = load_profile()
+        self.broker_label = str(self.profile.get("broker_label") or "カブ")
+        self.broker_tool_name = str(self.profile.get("broker_tool_name") or "カブステーション")
+        self.product_title = str(self.profile.get("product_title") or "N225AutoTrader-Local")
         # ★詳細デバッグログの ON/OFF を settings.json から反映（既定 True・決め打ちしない）。
         try:
             from app.feed import logger as _flog
@@ -147,8 +153,9 @@ class LocalEngineController:
         self.csv_dir = self._settings.get("csv_dir") or str(_data / "csv_import")
         self.engine = LiveEngine(on_log=self.on_log)
         _port = urlparse(self.bridge_url).port or 8001
-        self.bridge = BridgeProcess(exe_path=(bridge_exe or self._settings.get("bridge_exe")),
-                                    webhook_port=_port, on_log=self.on_log)   # 外部ブリッジ制御
+        self.bridge = BridgeProcess(exe_path=(bridge_exe or self._settings.get("bridge_exe") or self._default_bridge_exe()),
+                                    webhook_port=_port, on_log=self.on_log,
+                                    health=self.profile.get("broker_health"))   # 外部ブリッジ制御
         self._kabu_ok = False                # 外部状態キャッシュ（poll_external で更新）
         self._bridge_up = False              # ブリッジ起動中（手動起動含む・port判定）
         self._bridge_self = False            # ダッシュボードが起動した分か（停止可否）
@@ -445,10 +452,15 @@ class LocalEngineController:
             self._settings.pop("jpx_calendar_url", None)
         self._write_settings()
 
+    def _default_bridge_exe(self):
+        """ブリッジ exe の既定＝製品プロファイル（配布時＝インストール先）。無ければ開発ビルドの位置。"""
+        v = self.profile.get("bridge_exe_default")
+        return Path(v) if v else DEFAULT_BRIDGE_EXE
+
     def set_bridge_exe(self, path: str | None) -> None:
         self._settings["bridge_exe"] = path or None
         self._write_settings()
-        self.bridge.exe_path = Path(path) if path else DEFAULT_BRIDGE_EXE
+        self.bridge.exe_path = Path(path) if path else self._default_bridge_exe()
 
     def set_data_paths(self, parquet_path: str | None = None, csv_dir: str | None = None) -> None:
         if parquet_path is not None:
@@ -468,7 +480,7 @@ class LocalEngineController:
     def settings(self) -> dict:
         """設定画面が表示する現在値。"""
         return {"passphrase": self.passphrase, "bridge_url": self.bridge_url,
-                "bridge_exe": self._settings.get("bridge_exe") or str(DEFAULT_BRIDGE_EXE),
+                "bridge_exe": self._settings.get("bridge_exe") or str(self._default_bridge_exe()),
                 "parquet_path": self.parquet_path, "csv_dir": self.csv_dir,
                 "theme": self._settings.get("theme", "dark"),
                 "font_scale": float(self._settings.get("font_scale", 1.0)),
