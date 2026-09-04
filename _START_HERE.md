@@ -53,11 +53,14 @@
 
 ## 現在地
 
-> ⚠️ **未更新。**この節に最後に反映された内容は **2026-08-18**（「シークレットコード」→「パスフレーズ」改称）。
-> **それ以降の作業は `docs/devlog/` を見ること。**
->
-> **次に N225LocalEngine を触ったとき、この節を現在の状態に書き換える**（上書き・追記しない）。
-> 直近で記録されている未解決事項は、下の「経緯」の 2026-06-30（warmup 5/6 ＝ MESA5_Portfolio ロード失敗）。
+**2026-09-04：楽天RSS版ローカル製品（⑤）のために「製品プロファイル」を追加した。kabu 版の既定動作は変えていない・反映はエンジン再起動後。**
+
+- 追加＝`app/engine/product_profile.py`（`engine/product_profile.json` があれば楽天版の既定、無ければ kabu 版）。
+  `bridge_process.py`（証券会社ツールの確認を http／process で切替）・`bridge_secret.py`（passphrase の取得元をプロファイルの `bridge_product` の AppData に）・
+  `controller.py`（既定 exe・LED 名・タイトル）・`dashboard.py`（LED「カブ」→プロファイル名・案内文）。ローカル commit 済み・**push 未**（発注に関わる修正ではないが、画面未起動のため）。
+- 楽天版配布ツリー＝`distribution/runtime-local-rakuten/`（`sync_local_rakuten.ps1` が `engine/product_profile.json` を生成）。正本＝`DISTRIBUTION_MAP.md` §6.2 ⑤。
+- **未確認**：ダッシュボード画面（LED 名の表示・設定ダイアログの既定 exe）は再起動していない。`app/dashboard/settings_dialog.py` に**別セッションの未コミット変更**と `manual/`（未追跡）が残っている（触っていない）。
+- それ以前の作業は `docs/devlog/`（直近の未解決＝下の「経緯」2026-06-30 warmup 5/6）。
 
 ## 次の一手
 
