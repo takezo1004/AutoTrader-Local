@@ -51,9 +51,13 @@ class SettingsDialog(tk.Toplevel):
         g = tk.Frame(self, bg=BG); g.pack(fill="x", padx=16)
         g.columnconfigure(1, weight=1)
 
-        def field(r, label, var, browse=None):
+        def field(r, label, var, browse=None, secret=False):
             tk.Label(g, text=label, bg=BG, fg=FG, font=("Segoe UI", 9), width=18, anchor="w").grid(row=r, column=0, sticky="w", pady=5)
-            show = "•" if "シークレット" in label else None
+            # ★伏せ字は呼び出し側が secret=True で指定する（ラベル文字列で判定しない）。
+            #   旧実装は label に "シークレット" を含むかで判定しており、2026-08-18 の
+            #   「シークレットコード」→「パスフレーズ」改称でマスクが外れ、設定画面に
+            #   パスフレーズが平文表示されていた（2026-09-03 マニュアル用の撮影で発覚）。
+            show = "•" if secret else None
             e = ttk.Entry(g, textvariable=var, show=show)
             e.grid(row=r, column=1, sticky="we", pady=5)
             if browse:
@@ -62,7 +66,7 @@ class SettingsDialog(tk.Toplevel):
             return e
 
         # パスフレーズ＋👁表示/非表示トグル
-        self.secret_entry = field(0, "パスフレーズ", self.v_secret)
+        self.secret_entry = field(0, "パスフレーズ", self.v_secret, secret=True)
         self._secret_shown = False
         self.eye_btn = tk.Button(g, text="👁", command=self._toggle_secret, bg=PANEL_BG_HI, fg=FG,
                                  relief=tk.FLAT, cursor="hand2", bd=0, padx=8,

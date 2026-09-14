@@ -1,0 +1,11 @@
+OK   main  (896, 687)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\main.png
+OK   settings  (636, 521)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\settings.png
+OK   add_strategy  (316, 215)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\add_strategy.png
+OK   register_edit  (456, 379)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\register_edit.png
+OK   params  (636, 699)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\params.png
+OK   data_manage  (576, 388)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\data_manage.png
+OK   trade_records  (1236, 672)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\trade_records.png
+OK   calendar  (616, 637)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\calendar.png
+OK   backtest  (676, 679)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\backtest.png
+OK   main_after  (896, 687)  C:\Users\takao2\N225TradingSystem\N225LocalEngine\manual\images\raw\main_after.png
+--- 終了 ---
