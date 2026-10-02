@@ -8,8 +8,11 @@
 > 🚫 **【最優先】発注に関わる修正は、実トレードでテストしてから GitHub を更新する**（2026-08-18 ユーザー指示）
 > 順序＝**①修正 → ②再起動して実トレードで確認 → ③合格したら push → ④Release まで通す**。
 > **③④はセット。**ソースだけ push して Release を作らないのは中途半端で、ソースと配布物が食い違う。
-> ローカル版の完了までの流れ＝`sync_local.ps1` → `runtime-local` commit → push →
-> `release_local.ps1` → DevConsole「GitHub公開（Release）」で新版公開。
+> ローカル版の完了までの流れ（**2026-10-02 に変更。`sync_local.ps1`・`release_local.ps1`・`runtime-local/` は廃止・削除**）＝
+> ①`manual/_tools/build_html.py`（マニュアルを直したとき） →②`installer/build.ps1`（Setup を作る） →
+> ③この木を commit → push（`AutoTrader-Local`・**Public**） →④DevConsole「GitHub公開（Release）」の
+> ［③ ローカル版を Release 公開／更新］。**配布仕様の正本＝ルート `DISTRIBUTION_MAP.md`「ローカル版の配布仕様（D15）」。**
+> 追随漏れは DevConsole「配布」タブの［★ ずれを見張る］で確認する（D18）。
 
 
 > ✅ **2026-08-18 実施：「シークレットコード」→「パスフレーズ」に改称**（ユーザー決定・ブリッジ側の名称に統一）
