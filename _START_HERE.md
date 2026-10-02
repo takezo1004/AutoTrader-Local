@@ -54,7 +54,31 @@
 - warmup 300本未充足で発注しない／先読み禁止（確定足まで）。
 - 指標ヘルパーは import して使う（再実装禁止）。
 
-## 現在地
+## 現在地（2026-10-02・インストーラー方式の 2.1.0 を無料公開）
+
+**配布の形を変えた**＝ZIP ＋ 起動バット → **インストーラー 1 本＋デスクトップアイコン**。利用者に Python・uv・.NET は要らない。
+
+| もの | 実物 |
+|---|---|
+| 製品名 | **AutoTrader Local**（旧「N225AutoTrader-Local」「N225AutoTrader ローカル版」は廃止） |
+| 版 | `pyproject.toml` **2.1.0** |
+| Setup | `installer/output/AutoTrader-Local-Setup-2.1.0.exe`（**37.3 MB**・SHA256 `e97ed447…64aa91`） |
+| GitHub | **`AutoTrader-Local` を Public に変更**。**Release `v2.1.0`** 公開／push 済み `976c381` |
+| 組み立て | **`installer/build.ps1` 1 本だけ**（ランチャー → 依存 → 削り → payload → ISCC）。`distribution/` 側の一式（`runtime-local/`・`sync_local.ps1`・`release_local.ps1`）は**廃止・削除** |
+| 中身 | ランチャー `AutoTrader-Local.exe`（8.1 MB）＋ソースの `.py`＋`lib\`（131.6 MB）＋`manual\manual.html`。インストール先 `C:\Users\<名前>\AutoTraderLocal\` 固定・**UAC なし** |
+
+- **ダッシュボードの起動時に、開発キットで作った AutoTrader Bridge も起動する**（`app/bridge_launcher.py`。導入先は決め打ちせず `%LOCALAPPDATA%\AutoTraderBridge\install.json` の `bridgeExe` から解決）
+- マニュアルは **0-3 ダウンロードとインストール（新規・Assets の画像つき）**を追加し、**執筆規約を全ページに適用**（見出し 58 件・本文 20 件）。TradingView 版（別製品）の説明は削除
+- 配布仕様の正本＝ルート [`DISTRIBUTION_MAP.md`](../DISTRIBUTION_MAP.md)「ローカル版の配布仕様（D15）」。公開の決定＝D16
+
+**次の一手**
+
+1. **実機でインストールと起動の確認**（Setup を実行 → デスクトップのアイコン → 画面が出るか → ブリッジが起動するか）。**未実施**
+2. 無料公開だが**発注には有料の開発キットで作ったブリッジが必要**。この案内のしかたは**現状のままでよい**（2026-10-02 ユーザー判断＝README とマニュアル 0-2 に書いてある内容で足りる）
+
+---
+
+### 前の現在地（2026-09-04・ユーザーマニュアルの新規作成）
 
 **2026-09-04：ユーザーマニュアルを新規作成した（`manual/` 全 73 ファイル）。**
 
