@@ -14,7 +14,7 @@
 """
 
 # ダッシュボードとヘッドレスで共有する単一の Mutex 名（必ず一致させる）。
-MUTEX_NAME = "N225AutoTraderLocalEngine"
+MUTEX_NAME = "AutoTraderLocalEngine"
 
 
 def acquire_single_instance(name: str = MUTEX_NAME):

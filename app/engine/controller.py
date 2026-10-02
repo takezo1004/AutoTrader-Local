@@ -130,7 +130,7 @@ class LocalEngineController:
         self.profile = load_profile()
         self.broker_label = str(self.profile.get("broker_label") or "カブ")
         self.broker_tool_name = str(self.profile.get("broker_tool_name") or "カブステーション")
-        self.product_title = str(self.profile.get("product_title") or "N225AutoTrader-Local")
+        self.product_title = str(self.profile.get("product_title") or "AutoTrader Local")
         # ★詳細デバッグログの ON/OFF を settings.json から反映（既定 True・決め打ちしない）。
         try:
             from app.feed import logger as _flog

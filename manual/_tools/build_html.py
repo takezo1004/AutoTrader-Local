@@ -27,7 +27,7 @@ DST = OUT / "manual.html"
 
 # 目次の順番（_INDEX.md の並びと合わせる）
 ORDER = [
-    ("0. はじめに", ["00_intro/01_system.md", "00_intro/02_flow.md"]),
+    ("0. はじめに", ["00_intro/01_system.md", "00_intro/02_flow.md", "00_intro/03_install.md"]),
     ("1. 導入と画面", ["01_setup/01_startup.md", "01_setup/02_mainwindow.md",
                        "01_setup/03_settings.md", "01_setup/04_bridge.md",
                        "01_setup/05_check.md"]),

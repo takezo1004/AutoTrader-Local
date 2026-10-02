@@ -24,7 +24,7 @@ _ENGINE_DIR = Path(__file__).resolve().parents[2]      # …/engine（配布）�
 PROFILE_PATH = _ENGINE_DIR / "product_profile.json"
 
 DEFAULT_PROFILE: dict = {
-    "product_title": "N225AutoTrader-Local",
+    "product_title": "AutoTrader Local",
     "broker_name": "kabu",
     "broker_label": "カブ",
     "broker_tool_name": "カブステーション",
