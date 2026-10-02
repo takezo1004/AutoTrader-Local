@@ -13,7 +13,7 @@
 
 [project]
 name = "n225-local-engine"
-version = "2.0.4"
+version = "2.1.0"
 description = "N225LocalEngine — 全ローカルで日経225先物(15分足)を自動売買する戦略実行基盤（ローカル版）"
 readme = "docs/USER_MANUAL.md"
 requires-python = ">=3.10"

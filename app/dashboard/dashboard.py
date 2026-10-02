@@ -50,7 +50,7 @@ class Dashboard:
         self._closed = False
         self._feed = None
 
-        root.title("N225AutoTrader-Local")
+        root.title("AutoTrader Local")
         fit(root, 880, 520); root.minsize(820, 480)
         root.configure(bg=BG)
         apply_theme(root)
@@ -87,7 +87,7 @@ class Dashboard:
     def _build_header(self):
         # サブタイトルは廃止。タイトルを縮小し、設定・LED を左寄せにして横幅を詰める。
         h = tk.Frame(self.root, bg=BG, height=46); h.pack(fill=tk.X, padx=16, pady=(10, 6)); h.pack_propagate(False)
-        tk.Label(h, text=getattr(self.ctrl, "product_title", "N225AutoTrader-Local"), font=("Segoe UI Semibold", 14), bg=BG, fg=ACCENT).pack(side=tk.LEFT)
+        tk.Label(h, text=getattr(self.ctrl, "product_title", "AutoTrader Local"), font=("Segoe UI Semibold", 14), bg=BG, fg=ACCENT).pack(side=tk.LEFT)
         # 設定・LED・時計はまとめて右側（時間表示の隣）に寄せる。
         self.lbl_clock = tk.Label(h, text="--:--:--", font=("Consolas", 13), bg=BG, fg=FG_DIM)
         self.lbl_clock.pack(side=tk.RIGHT, padx=(8, 0))
@@ -502,7 +502,7 @@ class Dashboard:
 from app.instance_lock import acquire_single_instance as _acquire_single_instance  # noqa: E402
 
 
-def _focus_existing(title: str = "N225AutoTrader-Local") -> None:
+def _focus_existing(title: str = "AutoTrader Local") -> None:
     """既存ダッシュボードのウィンドウを前面化する（タイトル一致）。"""
     try:
         import ctypes
@@ -536,7 +536,7 @@ def main():
         _focus_existing()
         try:
             r = tk.Tk(); r.withdraw()                 # tk/messagebox はモジュール先頭で import 済
-            messagebox.showinfo("N225AutoTrader-Local",
+            messagebox.showinfo("AutoTrader Local",
                                 "ダッシュボードは既に起動しています。（二重起動はできません）")
             r.destroy()
         except Exception:

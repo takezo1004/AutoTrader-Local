@@ -20,3 +20,9 @@ data/ohlc_live.parquet
 # 破損時の退避
 *.corrupt
 *.corrupt_bak
+
+# インストーラーの生成物（build.ps1 が作り直す。追跡するのは spec / iss / build.ps1 / launcher.py だけ）
+installer/build/
+installer/dist/
+installer/payload/
+installer/output/
