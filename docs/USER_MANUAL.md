@@ -236,7 +236,7 @@
 - **2ルートのインストール**：
   - **基本ルート（Claude Code 不要）**＝①ブリッジ installer をダブルクリック（あれば入れない）→②`engine/` で `uv sync`（uv が専用 Python＋ライブラリを構築・既存 Python と非競合）→③`起動_N225LocalEngine.bat`。
   - **保険ルート**＝入らないときに Claude Code で `/install` `/setup-local` `/verify` `/diagnose` `/update`。
-- **配布ツリー**＝`distribution/runtime-local/`（`engine/`＋ブリッジ **source 同梱**＝案A＋`data/seed/`＋起動bat/アイコン＋`VERSION.json`＋`README.md`＋`CLAUDE.md`/`.claude/`）。組み立て＝`distribution/sync_local.ps1`（コード↔ユーザーデータを excludelist で分離）。
+- **配布物**＝`installer/build.ps1` が作る **installer 1 本**（アイコンで起動・インストール先はユーザーフォルダ）。正本＝ルート `DISTRIBUTION_MAP.md`「ローカル版の配布仕様（D15・ここが唯一の正本）」。
 - **アップデート**：新版取得→（ブリッジが変われば）installer 再実行で上書きアップグレード→（エンジンが変われば）`uv sync`。**蓄積足・登録・設定・取引記録は消えません**（コードだけ入替・6ヶ月シードは `data/seed/` から初回のみ展開）。
 - **市場データ**：6ヶ月BTシードの同梱可否は 225Labo 再配布規約の確認後に確定（不可ならユーザーが [📁 データ管理] から各自取得）。
 - 〔保留〕ブリッジ installer の同梱は release ビルド（Inno Setup 6＋.NET 8 SDK）後。それまでは `bridge/` のソースから自分でビルド（`bridge/installer/build.ps1`）。

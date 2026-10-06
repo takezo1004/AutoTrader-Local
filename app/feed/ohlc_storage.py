@@ -26,7 +26,7 @@ MONTHS_KEEP = 6           # ★蓄積ストア(parquet)の保持期間＝直近6
 DATA = Path(__file__).resolve().parents[2] / "data"   # = N225LocalEngine/data
 DATA.mkdir(parents=True, exist_ok=True)
 DEFAULT_PARQUET = str(DATA / "ohlc_live.parquet")
-# 配布同梱の「6ヶ月BTシード」置き場（distribution の sync_local.ps1 が用意）。
+# 配布同梱の「6ヶ月BTシード」置き場（installer/build.ps1 が用意。同梱可否は 225Labo 再配布規約の確認後）。
 SEED_PARQUET = str(DATA / "seed" / "ohlc_live.parquet")
 
 
