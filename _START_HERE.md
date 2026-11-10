@@ -37,7 +37,7 @@
 - warmup 300本未充足で発注しない／先読み禁止（確定足まで）。
 - 指標ヘルパーは import して使う（再実装禁止）。
 
-## 現在地（インストーラー方式。2.1.1＝引けの板寄せ tick で成行を約定させない修正。Release は実機確認のあと）
+## 現在地（インストーラー方式。2.1.1＝引けの板寄せ tick で成行を約定させない修正・Release 済み・実機確認は次の 06:00／08:45）
 
 **配布の形を変えた**＝ZIP ＋ 起動バット → **インストーラー 1 本＋デスクトップアイコン**。利用者に Python・uv・.NET は要らない。
 
@@ -45,8 +45,8 @@
 |---|---|
 | 製品名 | **AutoTrader Local**（旧「N225AutoTrader-Local」「N225AutoTrader ローカル版」は廃止） |
 | 版 | `pyproject.toml` **2.1.1**。`app/engine/realtime_broker.py` `on_tick` の先頭で、場が開いていない時刻の tick（引けの板寄せ約定値・プレオープン）では何もしない（判定＝`_market_hours.is_open_at`）。セッション最後の足で予約した成行は次のセッションの最初の tick（寄付）で 1 回だけ約定・送出する＝BT・TradingView と同じ（詳細仕様 §B.3 (0)・テスト `tests/test_close_auction_tick.py`）。私用の統合ダッシュボードは `N225LocalEngine/` を直接 import するので、次回起動から効く |
-| Setup | `installer/output/AutoTrader-Local-Setup-2.1.0.exe`（**37.3 MB**・SHA256 `e97ed447…64aa91`） |
-| GitHub | **`AutoTrader-Local` を Public に変更**。**Release `v2.1.0`** 公開／push 済み `976c381` |
+| Setup | `installer/output/AutoTrader-Local-Setup-2.1.1.exe`（**37.4 MB**・SHA256 `3efe979e…aba074`） |
+| GitHub | `AutoTrader-Local`（Public）。**Release `v2.1.1`** 公開／push 済み `7cc8e65`（2026-11-10） |
 | 組み立て | **`installer/build.ps1` 1 本だけ**（ランチャー → 依存 → 削り → payload → ISCC）。`distribution/` 側の一式（`runtime-local/`・`sync_local.ps1`・`release_local.ps1`）は**廃止・削除** |
 | 中身 | ランチャー `AutoTrader-Local.exe`（8.1 MB）＋ソースの `.py`＋`lib\`（131.6 MB）＋`manual\manual.html`。インストール先 `C:\Users\<名前>\AutoTraderLocal\` 固定・**UAC なし** |
 
