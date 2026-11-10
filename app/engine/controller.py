@@ -801,6 +801,16 @@ class LocalEngineController:
         ★2026-08-10：渡された warmup が宣言最大に足りなければストアから補充（決め打ち500の廃止）。
         """
         warmup_df = self._topup_warmup_df(warmup_df)
+        try:                                     # ★欠けの点検（履歴データ管理_設計書 D4）＝知らせるだけで止めない
+            from app.backtest import data_provider as _dp
+            _gaps = _dp.find_gaps(warmup_df) if warmup_df is not None and len(warmup_df) else []
+            if _gaps:
+                self.on_log(f"⚠ ウォームアップの履歴に欠け {len(_gaps)} 区間（止めずに続けます。"
+                            f"データ管理で、決めた元から履歴を取り込むと埋まります）")
+                for _line in _dp.format_gaps(_gaps)[:5]:
+                    self.on_log("    " + _line)
+        except Exception as _e:
+            self.on_log(f"欠けの点検をスキップ: {_e}")
         for name, rb in self.engine._brokers.items():
             self._warm_one(name, rb, warmup_df, self.engine._enabled.get(name, False))
             self.engine.set_ready(name, rb._warm_ready)

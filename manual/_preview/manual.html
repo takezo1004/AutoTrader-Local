@@ -585,6 +585,9 @@ hr { border:0; border-top:1px solid var(--line); margin:28px 0; }
 </tbody>
 </table>
 <p><strong>✅ が 2 つそろっていれば大丈夫</strong>です。⚠ が出たら <a href="#02_data-02_import">2-2 履歴データを取り込む</a> を行ってください。</p>
+<p>その下の <strong>「欠け」</strong> は、取引時間の中で足が抜けている区間です（パソコンを止めていた間・停電の間など）。
+「なし」なら問題ありません。⚠ が出ているときは、区間が一覧で出ます。<a href="#02_data-02_import">2-2</a> の手順で、
+決めた元から履歴を取り込むと埋まります。欠けがあっても自動運用は止まりません（起動時のログにも同じ一覧が出ます）。</p>
 <h2>② 蓄積ストアの場所</h2>
 <p>ファイルの場所が表示されます。既定は <code>data/ohlc_live.parquet</code> です（<a href="#05_reference-02_files">5-2</a>）。</p>
 <h2>③ ファイルを取り込み</h2>
@@ -621,6 +624,8 @@ hr { border:0; border-top:1px solid var(--line); margin:28px 0; }
 </table>
 <ul>
 <li>取り込んだ足と貯まっていた足が重なる場合は、<strong>取り込んだ方で上書き</strong>されます。</li>
+<li><strong>取り込む元は一つに決めてください</strong>（<a href="#02_data-02_import">2-2</a>）。元が違うと寄り付き・引けの足の値が少し変わるため、
+  混ぜると継ぎ目に段差が出ます。</li>
 <li><strong>銘柄は必ず「日経225ミニ」</strong>です。マイクロと混ぜないでください（<a href="#02_data-03_sources">2-3</a>）。</li>
 </ul></section><section id="02_data-02_import"><h1>2-2 履歴データを取り込む</h1>
 <p>※ <strong>取り込みは、自動運用を止めてから</strong>行ってください（ライブの書き込みとぶつかるのを避けるためです）。</p>
@@ -632,6 +637,17 @@ hr { border:0; border-top:1px solid var(--line); margin:28px 0; }
 <li><strong>取引をお休みした・パソコンを止めていたあと</strong>（その間のろうそく足が抜けています）</li>
 <li><strong>［📁 データ管理］で「warmup 不足」「BT(6ヶ月) 不足」と出たとき</strong></li>
 </ul>
+<h2>取り込む元は一つに決める</h2>
+<p>履歴の元は 3 つから選べますが、<strong>一つに決めて、毎回同じ元から取り込んでください</strong>。</p>
+<ul>
+<li>TradingView をお持ちの方 → <strong>TradingView の CSV</strong></li>
+<li>お持ちでない方 → <strong>kabu ステーションの CSV</strong>（長期の履歴が要るときだけ 225Labo）</li>
+</ul>
+<p>元が違うと、寄り付き・引けの足の値が少し違います（それぞれの集計の違いで、どちらが間違いというものではありません）。
+混ぜると継ぎ目に段差ができ、戦略の判断がその分だけずれます。</p>
+<p><strong>自動運用を止めていた・停電でパソコンが止まった</strong>ときは、その間の足が抜けます（［📁 データ管理］に「欠け」として出ます）。
+再開したら、<strong>決めた元から</strong>その期間を含むファイルを取り込んで埋めてください。欠けたままでも自動運用は動きますが、
+その間の足を見ていない分だけ指標がずれます。</p>
 <h2>取り込める 3 つの形式</h2>
 <table>
 <thead>
@@ -668,6 +684,9 @@ hr { border:0; border-top:1px solid var(--line); margin:28px 0; }
 <li>③を取り込むと、重なる足は <strong>TradingView の値で上書き</strong>されます。</li>
 <li>③で出来高も入れるには、<strong>TradingView のチャートに「出来高」インジケーターを載せたまま</strong>
   書き出してください。載せずに書き出した CSV は、出来高 0 として取り込まれます。</li>
+<li><strong>まだ閉じていない足</strong>（ダウンロードした時点で形成中だった最後の足）は自動で落とします。</li>
+<li>貯まっていた足と重なる区間があるときは、完了の表示に<strong>重なった本数と、値が違った本数</strong>が出ます。
+  値が違っても取り込みは止まらず、取り込んだ値で置き換えます（元の違いによる差は正常です）。</li>
 </ul>
 <h2>操作手順</h2>
 <ol>

@@ -37,14 +37,14 @@
 - warmup 300本未充足で発注しない／先読み禁止（確定足まで）。
 - 指標ヘルパーは import して使う（再実装禁止）。
 
-## 現在地（インストーラー方式。2.1.1＝引けの板寄せ tick で成行を約定させない修正・Release 済み・実機確認は次の 06:00／08:45）
+## 現在地（インストーラー方式。2.1.2＝取込の守り・欠けの表示・16:00。2.1.1＝引けの板寄せ tick の修正。実機確認は次の 06:00／08:45）
 
 **配布の形を変えた**＝ZIP ＋ 起動バット → **インストーラー 1 本＋デスクトップアイコン**。利用者に Python・uv・.NET は要らない。
 
 | もの | 実物 |
 |---|---|
 | 製品名 | **AutoTrader Local**（旧「N225AutoTrader-Local」「N225AutoTrader ローカル版」は廃止） |
-| 版 | `pyproject.toml` **2.1.1**。`app/engine/realtime_broker.py` `on_tick` の先頭で、場が開いていない時刻の tick（引けの板寄せ約定値・プレオープン）では何もしない（判定＝`_market_hours.is_open_at`）。セッション最後の足で予約した成行は次のセッションの最初の tick（寄付）で 1 回だけ約定・送出する＝BT・TradingView と同じ（詳細仕様 §B.3 (0)・テスト `tests/test_close_auction_tick.py`）。私用の統合ダッシュボードは `N225LocalEngine/` を直接 import するので、次回起動から効く |
+| 版 | `pyproject.toml` **2.1.2**。**2.1.2**＝取込の守り（未完成バーを落とす・重なりの仕分けを表示・取引日→実時刻の夜間前半 16:00）と欠けの表示（`data_provider.find_gaps`・データ管理・起動ログ）。設計＝`N225TradingViewEngine/A_author/design/履歴データ管理_設計書.md`。**2.1.1**＝`app/engine/realtime_broker.py` `on_tick` の先頭で、場が開いていない時刻の tick（引けの板寄せ約定値・プレオープン）では何もしない（判定＝`_market_hours.is_open_at`）。セッション最後の足で予約した成行は次のセッションの最初の tick（寄付）で 1 回だけ約定・送出する＝BT・TradingView と同じ（詳細仕様 §B.3 (0)・テスト `tests/test_close_auction_tick.py`）。私用の統合ダッシュボードは `N225LocalEngine/` を直接 import するので、次回起動から効く |
 | Setup | `installer/output/AutoTrader-Local-Setup-2.1.1.exe`（**37.4 MB**・SHA256 `3efe979e…aba074`） |
 | GitHub | `AutoTrader-Local`（Public）。**Release `v2.1.1`** 公開／push 済み `7cc8e65`（2026-11-10） |
 | 組み立て | **`installer/build.ps1` 1 本だけ**（ランチャー → 依存 → 削り → payload → ISCC）。`distribution/` 側の一式（`runtime-local/`・`sync_local.ps1`・`release_local.ps1`）は**廃止・削除** |

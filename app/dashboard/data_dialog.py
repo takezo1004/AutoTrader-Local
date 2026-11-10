@@ -42,6 +42,8 @@ class DataDialog(tk.Toplevel):
         self.lbl_n.pack(anchor="w")
         self.lbl_chk = tk.Label(info, text="", bg=BG, fg=FG, font=("Segoe UI", 9), anchor="w", justify="left")
         self.lbl_chk.pack(anchor="w", pady=(2, 0))
+        self.lbl_gap = tk.Label(info, text="", bg=BG, fg=FG, font=("Segoe UI", 9), anchor="w", justify="left")
+        self.lbl_gap.pack(anchor="w", pady=(2, 0))
         self.lbl_path = tk.Label(info, text="", bg=BG, fg=FG_DIM, font=("Consolas", 8), anchor="w")
         self.lbl_path.pack(anchor="w", pady=(2, 8))
 
@@ -77,12 +79,20 @@ class DataDialog(tk.Toplevel):
         if st["n"] == 0:
             self.lbl_n.config(text="蓄積ストア: まだデータがありません")
             self.lbl_chk.config(text="warmup ⚠ / BT(6ヶ月) ⚠ … データを取り込んでください", fg=YELLOW)
+            self.lbl_gap.config(text="")
             return
         self.lbl_n.config(text=f"蓄積ストア: {st['n']:,} 本 ・ {st['first']:%Y/%m/%d %H:%M} 〜 {st['last']:%Y/%m/%d %H:%M}")
         wu = "✅" if st["warmup_ok"] else "⚠ 不足"
         bt = "✅" if st["bt_ok"] else "⚠ 不足（履歴を取り込んでください）"
         self.lbl_chk.config(text=f"warmup(≥300本): {wu}    BT({st['bt_months']}ヶ月): {bt}",
                             fg=(GREEN if (st["warmup_ok"] and st["bt_ok"]) else YELLOW))
+        gl = st.get("gap_lines") or []
+        if gl:
+            shown = "\n".join("    " + x for x in gl[:5]) + ("\n    …" if len(gl) > 5 else "")
+            self.lbl_gap.config(text=f"欠け（取引時間の中で足が無い区間）: ⚠ {len(gl)} 区間 … 決めた元から取り込んで埋めてください\n{shown}",
+                                fg=YELLOW)
+        else:
+            self.lbl_gap.config(text="欠け（取引時間の中で足が無い区間）: なし", fg=GREEN)
 
     # ── 操作（別スレッド・処理中表示＋完了ダイアログ）──
     def _run(self, fn, label, busy_btn=None, busy_text="処理中…"):
@@ -155,6 +165,11 @@ class DataDialog(tk.Toplevel):
         msg = (f"[{kind}] 取込 {r['added_rows']:,} 本 → 蓄積 {r['before']:,}→{r['after']:,} 本"
                + (f"（{r['first']:%Y/%m/%d}〜{r['last']:%Y/%m/%d}）" if r['last'] is not None else "")
                + "\n（6ヶ月超は自動で切り詰め済）")
+        if r.get("dropped_unfinished"):
+            msg += f"\n未完成バー（まだ閉じていない足）{r['dropped_unfinished']} 本を落としました"
+        if r.get("overlap"):
+            msg += (f"\n貯まっていた足との重なり {r['overlap']:,} 本 … 不一致 {r.get('stale', 0) + r.get('unexplained', 0)} 本"
+                    f"（既存が古い足 {r.get('stale', 0)}・元の違い {r.get('unexplained', 0)}）→ 取り込んだ値で置き換えました")
         if arc and arc.get("moved"):
             msg += f"\n🗂 古い CSV {len(arc['moved'])} 本を _archive へ退避（最新5本を保持）"
         return msg

@@ -27,7 +27,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from .data_provider import load_csv, load_parquet, merge, _normalize, _COLS
+from .data_provider import (load_csv, load_parquet, merge, _normalize, _COLS,
+                            drop_unfinished, classify_overlap, find_gaps, format_gaps)
 
 MONTHS_KEEP = 6          # 蓄積ストアの保持期間（ohlc_storage.MONTHS_KEEP と一致）
 LABO_SHEET = "15min"     # 225Labo xlsx の 15分足シート名
@@ -55,7 +56,7 @@ def previous_business_day(d):
 
 def settlement_to_actual(settlement_date, clock_time) -> datetime:
     """取引日(settlement) + 時計時刻 → 実時刻に変換（3セッション規則）。
-      17:00〜23:59 → (取引日の前営業日) + 時刻        （ナイト前半）
+      16:00〜23:59 → (取引日の前営業日) + 時刻        （ナイト前半。2024-11-04 以前の 16:30 開始を含む・正本 n225_timestamp.py と同じ）
       00:00〜06:30 → (取引日の前営業日 + 1暦日) + 時刻 （ナイト後半）
       08:00〜15:59 → 取引日 + 時刻                     （日中）
       その他        → 取引日 + 時刻                     （フォールバック）
@@ -66,7 +67,7 @@ def settlement_to_actual(settlement_date, clock_time) -> datetime:
     s = getattr(clock_time, "second", 0)
     base = settlement_date if isinstance(settlement_date, datetime) else pd.to_datetime(settlement_date).to_pydatetime()
     base = base.replace(hour=0, minute=0, second=0, microsecond=0)
-    if 17 <= h <= 23:
+    if 16 <= h <= 23:
         return previous_business_day(base).replace(hour=h, minute=m, second=s)
     elif h <= 6 or (h == 7 and m == 0):
         return (previous_business_day(base) + timedelta(days=1)).replace(hour=h, minute=m, second=s)
@@ -198,12 +199,21 @@ def import_file(path, parquet_path, fmt: str, months: int = MONTHS_KEEP) -> dict
         new_df = load_realtime_csv(p)
     else:
         raise ValueError(f"未知の形式: {fmt}（'realtime' / 'tv' / 'labo'）")
+    # ★取込の守り（履歴データ管理_設計書 D5）：未完成バーを落とし、重なる区間の不一致を仕分けて見せる。
+    #   取込分で置き換える決まり（D3）は変えない＝仕分けは止めるためではなく、何が起きたかを見せるため。
+    new_df, dropped = drop_unfinished(new_df)
+    store = load_parquet(parquet_path)
+    before = len(store)
+    overlap = int(len(store.index.intersection(new_df.index)))
+    cl = classify_overlap(store, new_df)
     added = len(new_df)
-    before = len(load_parquet(parquet_path))
     merged = merge_into_store(new_df, parquet_path, months)
     return {"fmt": fmt, "added_rows": added, "before": before, "after": len(merged),
             "first": merged.index[0] if len(merged) else None,
-            "last": merged.index[-1] if len(merged) else None}
+            "last": merged.index[-1] if len(merged) else None,
+            "dropped_unfinished": dropped, "overlap": overlap,
+            "stale": int(len(cl["stale"])), "unexplained": int(len(cl["unexplained"])),
+            "overlap_lines": cl["lines"]}
 
 
 def import_auto(path, parquet_path, months: int = MONTHS_KEEP) -> dict:
@@ -315,6 +325,8 @@ def store_status(parquet_path, warmup_target: int = 500, warmup_min: int = 300,
     # BT 充足判定：6ヶ月(≈180日)に対し約1ヶ月の余裕を許容（年初開始・休場・6ヶ月トリムの端数で
     # ぴったり6ヶ月にはならないため。実質「直近約半年」あれば可）。≈150日以上で OK。
     bt_ok = span_days >= (bt_months * 30 - 30)
+    gaps = find_gaps(df)                     # セッションの中の欠け（履歴データ管理_設計書 D4）
     return {"n": n, "first": first, "last": last, "span_days": span_days,
             "warmup_ok": n >= warmup_min, "warmup_target": warmup_target,
-            "bt_ok": bt_ok, "bt_months": bt_months}
+            "bt_ok": bt_ok, "bt_months": bt_months,
+            "gaps": gaps, "gap_lines": format_gaps(gaps)}
