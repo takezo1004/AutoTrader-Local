@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from app.engine import load_strategy, run_pine_fast, RealtimeBroker  # noqa: E402
 
-DATA = ROOT.parent / "N225DataPipeline" / "datasets" / "master_dataset_4y.pkl"  # データ正本=DataPipeline
+DATA = ROOT.parent / "N225DataPipeline" / "datasets" / "n225_15m_4y.pkl"  # データ正本=DataPipeline（15 分足・4 年）
 STRAT_FOLDER = ROOT / "strategies" / "DT_Stochastic"
 # ★pytest 自動実行用の既定本数（軽量・指値イントラバー約定を含む十分量）。フル検証はスクリプト実行：
 #   python tests/test_offline_eq_realtime.py [本数]

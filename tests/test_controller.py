@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """コントローラ統合テスト（J-5/J-6 相当・外部仕様 F1/F3/F4/F5）。
 
-実フィードの代わりに master データのスライスを「確定足＋合成tick」で直接 LiveEngine に流し、
+実フィードの代わりに正本（n225_15m_4y.pkl）のスライスを「確定足＋合成tick」で直接 LiveEngine に流し、
 登録/実行可否(段階1)/全体実行停止(段階2)/dry-run(仮想売買)/内蔵BT が動くことを確認。
 """
 import sys
@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from app.engine import LocalEngineController  # noqa: E402
 
-DATA = ROOT.parent / "N225DataPipeline" / "datasets" / "master_dataset_4y.pkl"  # データ正本=DataPipeline
+DATA = ROOT.parent / "N225DataPipeline" / "datasets" / "n225_15m_4y.pkl"  # データ正本=DataPipeline
 STRAT = ROOT / "strategies" / "DT_Stochastic"
 
 
@@ -46,14 +46,15 @@ def _feed(ctrl, df):
             ctrl.engine.on_tick(px, ts[i])
         ctrl.engine.on_confirmed_bar({"datetime": ts[i], "open": o[i], "high": h[i],
                                       "low": l[i], "close": c[i], "volume": 0})
+    ctrl.engine._dispatch_q.join()        # 確定足・tick は別スレッドの待ち行列で処理される＝全部さばけるまで待つ
 
 
 def test_controller_session():
     assert DATA.exists(), f"テストデータが無い: {DATA}"
     ds = pd.read_pickle(DATA).iloc[:1600]
     cols = ds[["open", "high", "low", "close"]].assign(volume=0)
-    warm = cols.iloc[:400]        # warmup（指標暖機）
-    live = cols.iloc[400:]        # ライブ相当（約1200本）
+    warm = cols.iloc[:600]        # warmup（指標暖機）
+    live = cols.iloc[600:]        # ライブ相当（約1200本）
 
     with tempfile.TemporaryDirectory() as d:
         state = Path(d) / "state"

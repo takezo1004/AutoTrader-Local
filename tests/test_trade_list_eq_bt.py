@@ -21,7 +21,7 @@ from app.engine.realtime_broker import RealtimeBroker          # noqa: E402
 from app.engine.strategy_loader import load_strategy           # noqa: E402
 from app.engine.controller import pair_trades                  # noqa: E402
 
-DATA = ROOT.parent / "N225DataPipeline" / "datasets" / "master_dataset_4y.pkl"
+DATA = ROOT.parent / "N225DataPipeline" / "datasets" / "n225_15m_4y.pkl"
 STRAT = ROOT / "strategies" / "MESA_Stochastic"
 
 

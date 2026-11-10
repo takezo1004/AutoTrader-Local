@@ -15,6 +15,7 @@ self.engine を動的参照（_engine_on_tick / _on_confirmed_bar クロージ�
 """
 import sys
 import tempfile
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -57,10 +58,10 @@ def test_register_while_running_keeps_all_ready():
     with tempfile.TemporaryDirectory() as d:
         ctrl = LocalEngineController(strategies_dir=STRAT_A.parent,
                                      state_dir=Path(d) / "state", on_log=lambda m: None)
-        ctrl._build_warmup_df = lambda: _mkdf(350)        # 高速・決定的な warmup に差し替え
+        ctrl._build_warmup_df = lambda: _mkdf(600)        # 高速・決定的な warmup に差し替え
 
         ctrl.register(STRAT_A)                             # 1本目（start 前＝再有効化は走らない）
-        assert ctrl.start(warmup_df=_mkdf(350), feed=_OkFeed()) is True
+        assert ctrl.start(warmup_df=_mkdf(600), feed=_OkFeed()) is True
         assert ctrl.engine.running is True
         names1 = list(ctrl.engine._brokers)
         assert len(names1) == 1
@@ -68,6 +69,9 @@ def test_register_while_running_keeps_all_ready():
 
         # ★稼働中に2本目を登録（旧バグ：ここで全戦略 ready=false 化していた）
         ctrl.register(STRAT_B)
+        for th in threading.enumerate():                    # 稼働中の登録は裏スレッドで warmup→差替（差分リロード）＝完了を待つ
+            if th.name.startswith("le-reload-"):
+                th.join(timeout=120)
         assert ctrl.engine.running is True, "登録後も running 継続"
         names2 = list(ctrl.engine._brokers)
         assert len(names2) == 2, "2戦略登録されている"
