@@ -29,6 +29,22 @@ except Exception:                            # pragma: no cover
     def dbg(*a, **k):
         pass
 
+try:                                         # 場が開いているか（正本＝_market_hours・時刻を決め打ちしない）
+    from app.feed import _market_hours as _mh
+except Exception:                            # pragma: no cover
+    _mh = None
+
+
+def _market_open(ts):
+    """tick の時刻に場が開いているか。判定できない（_market_hours が無い・ts が無い）ときは None。"""
+    if _mh is None or ts is None:
+        return None
+    try:
+        t = pd.Timestamp(ts)
+        return None if pd.isna(t) else bool(_mh.is_open_at(t.to_pydatetime()))
+    except Exception:
+        return None
+
 
 def _orders_brief(orders) -> str:
     """戦略が返した注文リスト（dict・正本プロトコル t=entry/close/exit/cancel）を短く要約。例外安全。"""
@@ -187,6 +203,12 @@ class RealtimeBroker:
 
     # ---- イベント①: 形成中足の各 tick ----
     def on_tick(self, price: float, ts, bar_open=None, bar_high=None, bar_low=None) -> None:
+        # ★場間の tick（引けの板寄せ約定値・プレオープン）では何もしない。
+        #   セッション最後の足（15:45／06:00 の板寄せ特別足）で予約した成行は、次のセッションの最初の tick（寄付）で
+        #   約定・送出する＝BT（次足始値）・TradingView（06:00 の足の確定は 08:45 の最初の tick）と同じ。
+        #   判定できないとき（None）は従来どおり進む。
+        if _market_open(ts) is False:
+            return
         # bar_open=寄付（セッション初足のみ命中）/ bar_high,bar_low=kabu 当日高安が当バーで更新された実値。
         # 渡されない（旧ブリッジ）時は現値標本のみ＝従来動作（後方互換）。
         price = float(price)

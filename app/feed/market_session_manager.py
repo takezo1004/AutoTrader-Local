@@ -1,8 +1,9 @@
 """
 market_session_manager.py
-プロジェクト共有の市場カレンダー/取引時間 (`N225SignalTrader/src/utils/market_hours.py`) を
-そのまま使う薄いラッパー。新規にカレンダーを作らず共有版を再利用する。
-  - 祝日/取引停止日 = %LOCALAPPDATA%/N225TradingSystem/data/market_Calendar.csv (共有・fetch_market_calendar.py が更新)
+同じフォルダの `_market_hours.py`（ベンダリング済み）をそのまま使う薄いラッパー。
+新規にカレンダーを作らず、_market_hours の判定を再利用する。
+  - 祝日/取引停止日 = N225LocalEngine/data/market_Calendar.csv
+    （ダッシュボードの［カレンダー］ボタン＝app/feed/calendar_fetch.py が更新）
   - セッション = 日中 08:45–15:45 / 夜間 17:00–翌06:00 (config 由来)
 ohlc_processor が期待する is_market_open() インターフェースを提供する。
 """

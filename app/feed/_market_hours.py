@@ -3,7 +3,7 @@
 元は config.py（dotenv）/ loguru に依存していたが、ベンダリングで自己完結化：
   - config の時刻定数はインライン化（値は config.py と同一）。
   - loguru は clone feed の log_message に差し替え。
-  - 取引停止日カレンダー（market_Calendar.csv）は共有 AppData を参照（存在しなければ土日のみ判定）。
+  - 取引停止日カレンダー（market_Calendar.csv）はプロジェクト内 data/ を参照（存在しなければ土日のみ判定）。
 session_manager が使う load_calendar() / is_trading_time() を提供する。
 """
 import csv
