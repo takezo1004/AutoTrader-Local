@@ -108,8 +108,8 @@ flowchart TB
 
 ### C-2. パラメータ調整ループ（param_form）
 
-- `config.json` を GUI で編集（数値=Entry／列挙=Combobox／真偽=Checkbutton／phase別=6×4表）。**list/dict は読み取り専用・保存時保持**（2026-06-30 修正でネスト dict も壊さない）。
-- **[保存してバックテスト]で窓を開いたまま調整→BT を反復**（[param_form.py:229-249](../../app/dashboard/param_form.py#L229)）。
+- `config.json` を GUI で編集（数値=Entry／列挙=Combobox／真偽=Checkbutton／phase別=6×4表）。**list/dict は読み取り専用・保存時保持**（ネスト dict も壊さない）。**null は空欄で出し、保存で null に戻す**（空欄・"None"・"null" → null、数値を入れれば数値。`_null_or_value`）。
+- **[保存してバックテスト]で窓を開いたまま調整→BT を反復**（[param_form.py:279-301](../../app/dashboard/param_form.py#L279)）。BT が例外で止まったときは状態の表示を「BT エラー」にし、エラー窓で内容を出す（`bt_view._show_error`）。
 - `_subs/` があればサブ別 config もタブ表示（合成戦略・MESA5_Portfolio）。
 - ★config の**値**はユーザーが BT で現市場に調整する前提＝Pine 既定と違って当然（[[feedback_config_params_intentionally_tuned]]）。
 

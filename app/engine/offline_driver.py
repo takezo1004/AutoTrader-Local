@@ -49,11 +49,14 @@ def _run_pine(strategy, df: pd.DataFrame, get_orders) -> pd.DataFrame:
 
 
 def run_pine(strategy, df: pd.DataFrame) -> pd.DataFrame:
-    """TV 忠実約定で戦略を回す（live と同一 on_bar・バッファ再計算）。"""
+    """TV 忠実約定で戦略を回す（live と同一 on_bar・バッファ再計算）。
+    出来高も live と同じく渡す（df に volume 列があればその値・無ければ 0）。出来高を読む戦略が run_pine_fast と一致する。"""
+    vol = df["volume"].to_numpy(float) if "volume" in df.columns else None
+
     def get(i, bar_tuple):
         o, h, l, c, t = bar_tuple
         return strategy.on_bar(Bar(ts=t, open=o, high=h, low=l, close=c,
-                                   volume=0.0)) or []
+                                   volume=(float(vol[i]) if vol is not None else 0.0))) or []
     return _run_pine(strategy, df, get)
 
 

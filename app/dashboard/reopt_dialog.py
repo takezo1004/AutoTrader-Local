@@ -62,7 +62,9 @@ class ReoptDialog(tk.Toplevel):
             prop = reopt.propose(self.folder, self.ctx)
             self.after(0, lambda: self._show(prop))
         except Exception as e:
-            self.after(0, lambda: self.status.config(text=f"エラー: {e}"))
+            # e は except を抜けると消える（Python 3）。後から呼ぶ関数には文字列にして引数で渡す。
+            msg = str(e)
+            self.after(0, lambda m=msg: self.status.config(text=f"エラー: {m}"))
 
     def _show(self, prop):
         self.proposals = prop
@@ -99,7 +101,8 @@ class ReoptDialog(tk.Toplevel):
             reopt.apply(self.folder, self.ctx, self.proposals)
             self.after(0, self._done)
         except Exception as e:
-            self.after(0, lambda: messagebox.showerror("適用エラー", str(e), parent=self))
+            msg = str(e)                       # e は except を抜けると消える（Python 3）
+            self.after(0, lambda m=msg: messagebox.showerror("適用エラー", m, parent=self))
 
     def _done(self):
         if self.on_applied:

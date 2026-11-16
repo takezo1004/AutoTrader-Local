@@ -79,7 +79,14 @@ class BacktestView(tk.Toplevel):
             rep = self.controller.backtest(self.name, df)
             self.after(0, lambda: self._show(rep))
         except Exception as e:
-            self.after(0, lambda: messagebox.showerror("BTエラー", str(e)))
+            # e は except を抜けると消える（Python 3）。後から呼ぶ関数には文字列にして引数で渡す。
+            msg = f"{type(e).__name__}: {e}"
+            self.after(0, lambda m=msg: self._show_error(m))
+
+    def _show_error(self, msg):
+        """BT が例外で止まったとき：状態の表示を変え、エラー窓で内容を出す（「実行中…」のまま止めない）。"""
+        self.status.config(text="BT エラー（内容はエラー窓）")
+        messagebox.showerror("BTエラー", msg, parent=self)
 
     def _open_trades(self):
         if not self._rep or not self._rep.get("trades"):

@@ -37,23 +37,19 @@
 - warmup 300本未充足で発注しない／先読み禁止（確定足まで）。
 - 指標ヘルパーは import して使う（再実装禁止）。
 
-## 現在地（インストーラー方式。2.1.2＝取込の守り・欠けの表示・16:00。2.1.1＝引けの板寄せ tick の修正。実機確認は次の 06:00／08:45）
+## 現在地（インストーラー方式。2.1.3＝画面 2 件と出来高の修正。2.1.2＝取込の守り・欠けの表示・16:00。2.1.1＝引けの板寄せ tick の修正）
 
 **配布の形を変えた**＝ZIP ＋ 起動バット → **インストーラー 1 本＋デスクトップアイコン**。利用者に Python・uv・.NET は要らない。
 
 | もの | 実物 |
 |---|---|
 | 製品名 | **AutoTrader Local**（旧「N225AutoTrader-Local」「N225AutoTrader ローカル版」は廃止） |
-| 版 | `pyproject.toml` **2.1.2**。**2.1.2**＝取込の守り（未完成バーを落とす・重なりの仕分けを表示・取引日→実時刻の夜間前半 16:00）と欠けの表示（`data_provider.find_gaps`・データ管理・起動ログ）。設計＝`N225TradingViewEngine/A_author/design/履歴データ管理_設計書.md`。**2.1.1**＝`app/engine/realtime_broker.py` `on_tick` の先頭で、場が開いていない時刻の tick（引けの板寄せ約定値・プレオープン）では何もしない（判定＝`_market_hours.is_open_at`）。セッション最後の足で予約した成行は次のセッションの最初の tick（寄付）で 1 回だけ約定・送出する＝BT・TradingView と同じ（詳細仕様 §B.3 (0)・テスト `tests/test_close_auction_tick.py`）。私用の統合ダッシュボードは `N225LocalEngine/` を直接 import するので、次回起動から効く |
-| Setup | `installer/output/AutoTrader-Local-Setup-2.1.2.exe`（**37.4 MB**・SHA256 `9976970c…b80133`） |
-| GitHub | `AutoTrader-Local`（Public）。**Release `v2.1.2`** 公開／push 済み（2026-11-10）。**`strategies/` は入れない**（`.gitignore`・`DISTRIBUTION_MAP.md`「ローカル版の配布仕様」） |
+| 版 | `pyproject.toml` **2.1.3**。**2.1.3**＝画面 2 件（`dashboard/bt_view.py`・`reopt_dialog.py`＝例外で止まったときにエラー窓を出す／`param_form.py`＝空欄の値を null で保存する）と出来高（`engine/offline_driver.py` の `run_pine`・`realtime_broker.py` の `prime()` も出来高を渡す。共有エンジン `_engine/backtest.py` の `run_pine` も同じ。テスト＝`tests/test_dialog_errors_and_null.py`・`tests/test_run_pine_volume.py`）。全テスト 95 件合格・総合版の画面で確認済み。`prime()` の出来高は発注に関わるが、実トレードでの確認より先に公開した（ユーザー指示）。**2.1.2**＝取込の守り（未完成バーを落とす・重なりの仕分けを表示・取引日→実時刻の夜間前半 16:00）と欠けの表示（`data_provider.find_gaps`・データ管理・起動ログ）。設計＝`N225TradingViewEngine/A_author/design/履歴データ管理_設計書.md`。**2.1.1**＝`app/engine/realtime_broker.py` `on_tick` の先頭で、場が開いていない時刻の tick（引けの板寄せ約定値・プレオープン）では何もしない（判定＝`_market_hours.is_open_at`）。セッション最後の足で予約した成行は次のセッションの最初の tick（寄付）で 1 回だけ約定・送出する＝BT・TradingView と同じ（詳細仕様 §B.3 (0)・テスト `tests/test_close_auction_tick.py`）。私用の統合ダッシュボードは `N225LocalEngine/` を直接 import するので、次回起動から効く |
+| Setup | `installer/output/AutoTrader-Local-Setup-2.1.3.exe`（**37.3 MB**・SHA256 `8a27bf55…279540`） |
+| GitHub | `AutoTrader-Local`（Public）。**Release `v2.1.3`** 公開／push 済み。**`strategies/` は入れない**（`.gitignore`・`DISTRIBUTION_MAP.md`「ローカル版の配布仕様」） |
 | 組み立て | **`installer/build.ps1` 1 本だけ**（ランチャー → 依存 → 削り → payload → ISCC）。`distribution/` 側の一式（`runtime-local/`・`sync_local.ps1`・`release_local.ps1`）は**廃止・削除** |
 | 中身 | ランチャー `AutoTrader-Local.exe`（8.1 MB）＋ソースの `.py`＋`lib\`（131.6 MB）＋`manual\manual.html`。インストール先 `C:\Users\<名前>\AutoTraderLocal\` 固定・**UAC なし** |
 
-- ★**`installer/payload/app/` は本体 `app/` と md5 が一致していない**（2026-10-09 の docstring 修正分。
-  `app/feed/_market_hours.py` と `app/feed/market_session_manager.py` のコメントだけの差）。
-  payload は `installer/build.ps1` の robocopy が作る**生成物**なので手で直さない。
-  **次に `build.ps1` を回したときに自動で揃う。**
 - 市場カレンダー（`data/market_Calendar.csv`）の休日判定は `app/feed/_market_hours.py:90`
   `is_no_trade_day()` の **1 か所集約**（土日 ＋ `_YEAR_BOUNDARY_CLOSED`＝1/1・1/2・1/3・12/31 ＋
   CSV の「実施しない」）。**1/1 は JPX の表に載らない**（注 1 で対象外）ので構造で持っている。

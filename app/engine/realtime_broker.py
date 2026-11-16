@@ -288,6 +288,7 @@ class RealtimeBroker:
         """
         o = df["open"].to_numpy(float); h = df["high"].to_numpy(float)
         l = df["low"].to_numpy(float); c = df["close"].to_numpy(float)
+        vol = df["volume"].to_numpy(float) if "volume" in df.columns else None   # 出来高も live と同じく渡す
         ts = df.index.to_numpy()
         for i in range(len(df)):
             self.strategy.position_size = 0
@@ -295,7 +296,7 @@ class RealtimeBroker:
             self.strategy.entry_bar = -1
             self.strategy.bars_since_entry = -1
             self.strategy.on_bar(Bar(ts=ts[i], open=o[i], high=h[i], low=l[i], close=c[i],
-                                     volume=0.0))
+                                     volume=(float(vol[i]) if vol is not None else 0.0)))
             self._bar_index += 1
         # broker は flat・_new_bar=True のまま（次の live tick が新バー初値）。
 

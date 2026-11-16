@@ -5,6 +5,7 @@
   - スカラ数値：Entry／列挙：ドロップダウン／真偽：Checkbutton
   - phase 別 6マス（allow_long/allow_short=真偽×6・upper_band/lower_band=数値×6）：6×4 の表
   - `_grp_*` はグループ見出し、`_comment` は出さない。リスト値（priority 等）は読み取り専用表示（保存時保持）。
+  - null（指定なし）は空欄で出し、保存で空欄・"None"・"null" は null に戻す（数値を入れれば数値）。
 
 ★汎用化（2026-06-29）:
   - フォルダに `_subs/` があれば、トップ config に加えて各 `_subs/<名>/config.json` を
@@ -206,7 +207,13 @@ class ParamForm(tk.Toplevel):
 
     def _field(self, frame, r, key, val, vars_):
         ttk.Label(frame, text=key).grid(row=r, column=0, sticky="w", padx=4, pady=1)
-        if isinstance(val, bool):
+        if val is None:
+            # null（指定なし）は空欄で出す。保存で空欄は null に戻す（_null_or_value）。
+            #   ※文字列の欄として扱うと str(None)＝"None" が文字列のまま書き戻り、null でなくなる。
+            v = tk.StringVar(value="")
+            ttk.Entry(frame, textvariable=v, width=12).grid(row=r, column=1, sticky="w")
+            vars_[key] = ("null", v)
+        elif isinstance(val, bool):
             v = tk.BooleanVar(value=val)
             ttk.Checkbutton(frame, variable=v).grid(row=r, column=1, sticky="w")
             vars_[key] = ("bool", v)
@@ -278,6 +285,8 @@ class ParamForm(tk.Toplevel):
                         cfg[key] = bool(var.get())
                     elif kind == "num":
                         cfg[key] = self._num(var.get())
+                    elif kind == "null":
+                        cfg[key] = self._null_or_value(var.get())
                     elif kind == "dict":
                         for ph, vv in var.items():
                             cur = cfg[key][ph]
@@ -324,7 +333,8 @@ class ParamForm(tk.Toplevel):
                             cell = cfg[key][ph]
                             vv.set(cell if isinstance(cell, bool) else str(cell))
                 elif key in cfg:
-                    var.set(bool(cfg[key]) if kind == "bool" else str(cfg[key]))
+                    cur = cfg[key]
+                    var.set(bool(cur) if kind == "bool" else ("" if cur is None else str(cur)))
         if self.on_saved:
             self.on_saved()
         self._status("再最適化を適用しました ✓")
@@ -335,3 +345,14 @@ class ParamForm(tk.Toplevel):
     def _num(s):
         s = str(s).strip()
         return float(s) if ("." in s or "e" in s.lower()) else int(s)
+
+    @classmethod
+    def _null_or_value(cls, s):
+        """null だった欄の保存値。空欄・"None"・"null" → None、数値として読めれば数値、それ以外は文字列のまま。"""
+        s = str(s).strip()
+        if s in ("", "None", "null"):
+            return None
+        try:
+            return cls._num(s)
+        except ValueError:
+            return s
